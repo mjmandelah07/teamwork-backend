@@ -1,7 +1,5 @@
-const http = require('http');
+/* eslint-disable no-console */
 const express = require('express');
-
-
 
 // create a port to listen on
 const app = express();
@@ -11,8 +9,6 @@ const PORT = process.env.PORT || 4000;
 app.get('/', (req, res) => {
   res.send('We are live now!');
 });
-
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
