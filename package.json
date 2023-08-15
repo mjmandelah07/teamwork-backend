@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "mojisola aramide",
   "license": "ISC",
@@ -14,5 +14,9 @@
     "express": "^4.18.2",
     "nodemon": "^3.0.1",
     "pg": "^8.11.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
   }
 }
