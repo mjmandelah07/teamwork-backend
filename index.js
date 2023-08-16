@@ -12,18 +12,18 @@ app.get('/', (req, res) => {
   res.send('We are live now!');
 });
 
-// Define a route handler for the database connection url
-app.get('/test-db', async (req, res) => {
+// connect to the database
+const database = async () => {
   try {
-    await db.connect(); // Connect to the database
-    res.send('Connected to PostgreSQL database');
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
+    await db.connect();
+
+  } catch (err) {
+    console.error(err);
   } finally {
-    db.end(); // Disconnect from the database
+    db.end();
   }
-});
+};
+database();
 
 
 
