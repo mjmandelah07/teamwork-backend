@@ -1,4 +1,4 @@
-const db = require('./db/db');
+const db = require('./db/queries/insertNewUser');
 const express = require('express');
 
 
@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 const database = async () => {
   try {
     await db.connect();
-
+    await db.insertUserData();
   } catch (err) {
     console.error(err);
   } finally {
