@@ -1,4 +1,4 @@
-const http = require('http');
+const db = require('./db/db');
 const express = require('express');
 
 
@@ -11,6 +11,19 @@ const PORT = process.env.PORT || 4000;
 app.get('/', (req, res) => {
   res.send('We are live now!');
 });
+
+// connect to the database
+const database = async () => {
+  try {
+    await db.connect();
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    db.end();
+  }
+};
+database();
 
 
 
