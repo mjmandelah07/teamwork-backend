@@ -26,6 +26,6 @@ module.exports = {
   },
   query: (query, values) => {
     return client.query(query, values);
-  }
- 
+  },
+  
 };
