@@ -15,7 +15,7 @@ module.exports = {
   connect: async () => {
     try {
       await client.connect();
-      console.log('Connected to PostgreSQL database');
+      console.log(`Connected to PostgreSQL database, ${process.env.DB_USER}`);
     } catch (error) {
       console.error('Error connecting to PostgreSQL:', error);
     }
@@ -24,4 +24,8 @@ module.exports = {
     client.end();
     console.log('Disconnected from PostgreSQL database');
   },
+  query: (query, values) => {
+    return client.query(query, values);
+  }
+ 
 };
