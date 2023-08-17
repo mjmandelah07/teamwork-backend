@@ -24,5 +24,8 @@ module.exports = {
     client.end();
     console.log('Disconnected from PostgreSQL database');
   },
+  query: (query, values) => {
+    return client.query(query, values);
+  }
  
 };

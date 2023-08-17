@@ -1,16 +1,8 @@
-const { Client } = require("pg");
+const db = require('../db');
 require('dotenv').config();
 const bcrypt = require("bcrypt");
 
-const dbConfig = {
-  user: process.env.DB_USER,
-  host: "localhost",
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD,
-  port: 5432,
-};
 
-const client = new Client(dbConfig);
 
 const createUsersAccount = async () => {
   
@@ -42,7 +34,7 @@ const createUsersAccount = async () => {
   `;
   const hashedPassword = await bcrypt.hash('admin88888', 10);
   const userData = {
-    firstName: "Moji",
+    firstName: "Mojisola oluwadamilola",
     lastName: "Aramide",
     email: "mojisolaaramide7@gmail.com",
     password: hashedPassword,
@@ -67,23 +59,20 @@ const createUsersAccount = async () => {
 
   try {
     // connect to database
-    await client.connect();
+    await db.connect();
 
     // Drop the table if it exists
-    await client.query(dropTableQuery);
+    await db.query(dropTableQuery);
 
     // Create the users table
-    await client.query(createUsersQuery);
+    await db.query(createUsersQuery);
     console.log('Users table created or already exists');
 
     // Insert dummy user data
-    await client.query(insertUserDataQuery, values);
+    await db.query(insertUserDataQuery, values);
     console.log('Dummy user data inserted');
   } catch (error) {
     console.error('Error:', error);
-  } finally {
-    // end database connection
-    await client.end();
   }
 }
 
