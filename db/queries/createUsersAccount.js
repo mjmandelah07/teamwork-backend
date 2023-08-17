@@ -1,15 +1,28 @@
+const { Client } = require("pg");
 require('dotenv').config();
-const db = require('./db');
+const bcrypt = require("bcrypt");
 
+const dbConfig = {
+  user: process.env.DB_USER,
+  host: "localhost",
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
+  port: 5432,
+};
 
-async function createUsersAccount() {
+const client = new Client(dbConfig);
+
+const createUsersAccount = async () => {
+  
+  const dropTableQuery = `DROP TABLE IF EXISTS users;`;
+
   const createUsersQuery = `
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS allUsers (
       id SERIAL PRIMARY KEY,
       firstName VARCHAR(255) NOT NULL,
       lastName VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL,
-      password VARCHAR(50) NOT NULL,
+      password VARCHAR(255) NOT NULL,
       gender VARCHAR(50),
       job_role VARCHAR(255),
       department VARCHAR(255),
@@ -20,16 +33,58 @@ async function createUsersAccount() {
     );
   `;
 
+  const insertUserDataQuery = `
+    INSERT INTO allUsers (
+      firstName, lastName, email, password, gender, job_role, department, address, role, created_on
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    );
+  `;
+  const hashedPassword = await bcrypt.hash('admin88888', 10);
+  const userData = {
+    firstName: "Moji",
+    lastName: "Aramide",
+    email: "mojisolaaramide7@gmail.com",
+    password: hashedPassword,
+    gender: "Female",
+    job_role: "Developer",
+    department: "IT",
+    address: "123 olukokun street",
+    role: "admin",
+  };
+  const values = [
+    userData.firstName,
+    userData.lastName,
+    userData.email,
+    userData.password,
+    userData.gender,
+    userData.job_role,
+    userData.department,
+    userData.address,
+    userData.role,
+    new Date(),
+  ];
+
   try {
-    await db.connect();
-    const client = db.getClient(); 
+    // connect to database
+    await client.connect();
+
+    // Drop the table if it exists
+    await client.query(dropTableQuery);
+
+    // Create the users table
     await client.query(createUsersQuery);
     console.log('Users table created or already exists');
+
+    // Insert dummy user data
+    await client.query(insertUserDataQuery, values);
+    console.log('Dummy user data inserted');
   } catch (error) {
-    console.error('Error creating users table:', error);
+    console.error('Error:', error);
   } finally {
-    await db.end();
+    // end database connection
+    await client.end();
   }
 }
 
-createUsersAccount();
+module.exports = { createUsersAccount };
