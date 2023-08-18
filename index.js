@@ -1,8 +1,7 @@
-// const { createUsersAccount } = require("./db/queries/createUsersAccount.js");
 const express = require("express");
 const bodyParser = require("body-parser");
-const userRoutes = require("./routes/userRoutes"); // Import the user routes module
-const db = require("./db/db.js");
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
 const gifRoutes = require('./routes/gifRoutes.js'); 
 
 
@@ -19,19 +18,10 @@ app.get("/", (req, res) => {
 
 //  routes
 app.use("/api", userRoutes);
-app.use("/api/gifs", gifRoutes);
+app.use("/api", gifRoutes);
+app.use("/api", authRoutes);
 
 
-// // connect to the database
-// const database = async () => {
-//   try {
-//     // await db.connect();
-//     await createUsersAccount();
-//   } catch (err) {
-//     console.error(err);
-//   }
-// };
-// database();
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

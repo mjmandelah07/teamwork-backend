@@ -11,7 +11,7 @@ cloudinary.config({
 });
 
 // Route to upload GIF and store URL in database
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/gifs", authMiddleware, async (req, res) => {
   try {
     const { base64EncodedGif, title } = req.body;
     const { userId } = req.user.id; // Get user ID from authenticated user data [authMiddleware]

@@ -63,7 +63,7 @@ router.post(
       firstName, lastName, email, password, gender, job_role, department, address, role, created_on
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-    ) RETURNING id;
+    ) RETURNING id;             
   `;
     const values = [
       userData.firstName,
