@@ -1,8 +1,9 @@
-const { createUsersAccount } = require("./db/queries/createUsersAccount.js");
+// const { createUsersAccount } = require("./db/queries/createUsersAccount.js");
 const express = require("express");
 const bodyParser = require("body-parser");
 const userRoutes = require("./routes/userRoutes"); // Import the user routes module
 const db = require("./db/db.js");
+const gifRoutes = require('./routes/gifRoutes.js'); 
 
 
 // create a port to listen on
@@ -17,7 +18,8 @@ app.get("/", (req, res) => {
 });
 
 //  routes
-app.use("/api/users", userRoutes);
+app.use("/api", userRoutes);
+app.use("/api/gifs", gifRoutes);
 
 
 // // connect to the database

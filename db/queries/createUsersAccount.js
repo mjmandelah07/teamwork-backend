@@ -32,17 +32,17 @@ const createUsersAccount = async () => {
       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
     );
   `;
-  const hashedPassword = await bcrypt.hash('admin88888', 10);
+  const hashedPassword = await bcrypt.hash('employee88888', 10);
   const userData = {
-    firstName: "Mojisola oluwadamilola",
-    lastName: "Aramide",
+    firstName: "oluwadamilola",
+    lastName: "Arami",
     email: "mojisolaaramide7@gmail.com",
     password: hashedPassword,
     gender: "Female",
-    job_role: "Developer",
+    job_role: "Designer",
     department: "IT",
     address: "123 olukokun street",
-    role: "admin",
+    role: "employee",
   };
   const values = [
     userData.firstName,
