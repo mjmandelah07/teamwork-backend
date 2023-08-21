@@ -10,20 +10,23 @@ router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    await db.connect();
-    const result = await db.query("SELECT * FROM allUsers WHERE email = $1", [
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
 
     if (!result.rows.length) {
-      return res.status(400).json({ error: "Invalid email or password" });
+      return res.status(400).json({ 
+        status: 'error',
+        error: "Invalid email" });
     }
 
     const user = result.rows[0];
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ error: "Invalid email or password" });
+      return res.status(400).json({ 
+        status: 'error',
+        error: "Invalid password" });
     }
 
     //  user data in the payload for token
@@ -39,7 +42,7 @@ router.post("/signin", async (req, res) => {
     });
 
     // Send the token and user details in the response
-    res.status(201).json({
+    res.status(200).json({
       status: "success",
       data: {
         message: "Logged in successfully",
@@ -49,10 +52,11 @@ router.post("/signin", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error logging in:", error);
-    res.status(500).json({ error: "An error occurred" });
-  } finally {
-    await db.end();
+    console.error(error);
+    res.status(401).json({
+      status: "error",
+      error: "An error occurred while login attempt",
+    });
   }
 });
 

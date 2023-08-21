@@ -6,22 +6,27 @@ module.exports = async (req, res, next) => {
   const token = req.header('Authorization');
 
   if (!token) {
-    return res.status(401).json({ error: 'Access denied' });
+    return res.status(401).json({ 
+      status: 'error',
+      error: 'Access denied' });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    await db.connect();
-    const result = await db.query('SELECT * FROM allUsers WHERE id = $1', [decoded.id]);
+    const result = await db.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
     if (!result.rows.length) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(404).json({
+        status: "error",
+        error: 'User not found',
+      });
     }
     req.user = result.rows[0];
     next();
   } catch (error) {
     console.error('Error authenticating user:', error);
-    res.status(500).json({ error: 'An error occurred' });
-  } finally {
-    await db.end();
+    res.status(401).json({
+      status: "error",
+      error: 'Error authenticating user',
+    });
   }
 };

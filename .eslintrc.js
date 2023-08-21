@@ -5,7 +5,7 @@ module.exports = {
       es2021: true,
       node: true,
     },
-    extends: ['standard', 'airbnb-base'],
+    extends: "eslint:recommended",
     overrides: [
       {
         env: {
@@ -20,5 +20,7 @@ module.exports = {
     parserOptions: {
       ecmaVersion: 'latest',
     },
-    rules: {},
+    rules: {
+      radix: 'off'
+    },
   };
