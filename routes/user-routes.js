@@ -6,7 +6,7 @@ const router = express.Router();
 const authMiddleware = require("../auth/auth-middle-ware");
 
 // Get all users
-router.get("/get-users", getAllUsers);
+router.get("/get-users", authMiddleware, getAllUsers);
 // admin create new user
 router.post("/auth/create-user", authMiddleware, createUser);
 

@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const db = require("../db/db");
 require("dotenv").config();
 const { createUsersAccount } = require("../db/queries/set-up-user-table");
@@ -8,11 +7,11 @@ const { createUsersAccount } = require("../db/queries/set-up-user-table");
 createUsersAccount();
 
 const createUser = async (req, res) => {
-  const user = req.user;
+  const userRole = req.user?.role;
   const userData = req.body;
 
   // Check if the authenticated user is an admin
-  if (user.role !== "admin") {
+  if (userRole !== "admin") {
     return res.status(403).json({
       status: "error",
       error: "Only admin users can create account",
@@ -57,24 +56,11 @@ const createUser = async (req, res) => {
     const result = await db.query(insertUserDataQuery, values);
     const createdUser = result.rows[0];
 
-    // Create a payload for token
-    const tokenPayload = {
-      userId: createdUser.id,
-      email: createdUser.email,
-      role: createdUser.role,
-    };
-
-    // Sign the payload with the secret key and generate the token
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
-
     // Send the token and user details in the response
     res.status(201).json({
       status: "success",
       data: {
         message: "User account successfully created",
-        token: token,
         userId: createdUser.id,
         email: createdUser.email,
         role: createdUser.role,
@@ -98,6 +84,15 @@ const createUser = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
+  const userRole = req.user?.role;
+
+  // Check if the authenticated user is an admin
+  if ( userRole !== "admin") {
+    return res.status(403).json({
+      status: "error",
+      error: "Only admin users can access this resource",
+    });
+  }
   try {
     const result = await db.query("SELECT * FROM users");
     res.status(200).json({
@@ -114,3 +109,4 @@ const getAllUsers = async (req, res) => {
 };
 
 module.exports = { createUser, getAllUsers };
+

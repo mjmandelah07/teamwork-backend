@@ -11,3 +11,4 @@ router.post("/gifs", authMiddleware, createGif);
 router.get("/", getAllGifs);
 
 module.exports = router;
+

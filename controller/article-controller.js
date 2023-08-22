@@ -6,16 +6,8 @@ createArticles();
 
 // Function to create and store articles
 const createArticle = async (req, res) => {
-  const user = req.user;
+  const userId = req.user?.id;
   const articleData = req.body;
-
-  // Any authenticated user can create articles
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      error: "Access denied",
-    });
-  }
 
   // Extract article data from the request body
   const { title, article } = articleData;
@@ -26,7 +18,8 @@ const createArticle = async (req, res) => {
   VALUES ($1, $2, $3) RETURNING *;
 `;
 
-  const articleValues = [title, article, user.id];
+
+  const articleValues = [title, article, userId] ;
 
   try {
     const result = await db.query(insertArticleQuery, articleValues);
@@ -55,15 +48,8 @@ const createArticle = async (req, res) => {
 
 const updateArticlebyId = async (req, res) => {
   const { title, article } = req.body;
-  const user = req.user;
+  const userId = req.user?.id;
   const articleId = req.params.articleId;
-
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      error: "Access denied",
-    });
-  }
 
   try {
     const updateQuery = `
@@ -74,7 +60,7 @@ const updateArticlebyId = async (req, res) => {
       `;
 
     const updatedOn = new Date();
-    const updateValues = [title, article, updatedOn, articleId, user.id];
+    const updateValues = [title, article, updatedOn, articleId, userId];
     const updateResult = await db.query(updateQuery, updateValues);
 
     if (updateResult.rowCount === 0) {
@@ -84,17 +70,17 @@ const updateArticlebyId = async (req, res) => {
       });
     }
 
-    const createdOn = updateResult.rows[0].created_on;
+    const updatedArticle = updateResult.rows[0];
 
     res.status(200).json({
       status: "success",
       data: {
         message: "Article successfully updated",
         articleId: articleId,
-        updatedOn: createdOn,
-        title: updateResult.rows[0].title,
-        article: updateResult.rows[0].article,
-        updated_on: updateResult.rows[0].updated_on,
+        updatedOn: updatedArticle.created_on,
+        title: updatedArticle.title,
+        article: updatedArticle.article,
+        updated_on: updatedArticle.updated_on,
       },
     });
   } catch (error) {
@@ -107,22 +93,30 @@ const updateArticlebyId = async (req, res) => {
 };
 
 const deleteArticleById = async (req, res) => {
-  const user = req.user;
+  const userId = req.user?.id;
+  const userRole = req.user?.role;
   const articleId = req.params.articleId;
 
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      error: "Access denied",
-    });
-  }
-
   try {
+    if (userRole !== "admin") {
+      const authorQuery = "SELECT user_id FROM articles WHERE id = $1";
+      const authorResult = await db.query(authorQuery, [articleId]);
+
+      if (
+        authorResult.rows.length === 0 ||
+        authorResult.rows[0].user_id !== userId
+      ) {
+        return res.status(403).json({
+          status: "error",
+          error: "Access denied: You are not authorized to delete this article",
+        });
+      }
+    }
     const deleteQuery = `
         DELETE FROM articles
-        WHERE id = $1 AND user_id = $2;
+        WHERE id = $1;
       `;
-    const deleteValues = [articleId, user.id];
+    const deleteValues = [articleId];
     const deleteResult = await db.query(deleteQuery, deleteValues);
 
     if (deleteResult.rowCount === 0) {
@@ -148,12 +142,8 @@ const deleteArticleById = async (req, res) => {
 };
 
 const getArticleById = async (req, res) => {
-  const user = req.user;
+  const userId = req.user?.id;
   const articleId = req.params.articleId;
-
-  if (!user) {
-    return res.status(401).json({ error: "Access denied" });
-  }
 
   try {
     const selectQuery = `
@@ -161,7 +151,7 @@ const getArticleById = async (req, res) => {
         FROM articles
         WHERE id = $1 AND user_id = $2;
       `;
-    const selectValues = [articleId, user.id];
+    const selectValues = [articleId, userId];
     const result = await db.query(selectQuery, selectValues);
 
     if (result.rows.length === 0) {
@@ -192,15 +182,7 @@ const getArticleById = async (req, res) => {
 };
 
 const getAllArticlesByUserId = async (req, res) => {
-  const user = req.user;
-  const userId = user.id;
-
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      error: "Access denied",
-    });
-  }
+  const userId = req.user?.id;
 
   try {
     const selectQuery = `
@@ -267,3 +249,4 @@ module.exports = {
   getAllArticlesByUserId,
   getAllArticles,
 };
+
