@@ -1,31 +1,27 @@
-require('dotenv').config();
-const { Client } = require('pg');
+require("dotenv").config();
+const { Pool } = require("pg");
 
 const dbConfig = {
   user: process.env.DB_USER,
-  host: 'localhost',
+  host: process.env.DB_HOST,
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
-  port: 5432, 
+  port: process.env.DB_PORT,
 };
 
-const client = new Client(dbConfig);
+const db = new Pool(dbConfig);
 
-module.exports = {
-  connect: async () => {
-    try {
-      await client.connect();
-      console.log(`Connected to PostgreSQL database, ${process.env.DB_USER}`);
-    } catch (error) {
-      console.error('Error connecting to PostgreSQL:', error);
-    }
-  },
-  end: () => {
-    client.end();
-    console.log('Disconnected from PostgreSQL database');
-  },
-  query: (query, values) => {
-    return client.query(query, values);
+const connect = async () => {
+  try {
+    const result = await db.query("SELECT $1::text as name", [
+      `Connected to PostgreSQL database, ${process.env.DB_USER}`,
+    ]);
+    console.log(result.rows[0].name);
+  } catch (error) {
+    console.error("Error connecting to PostgreSQL:", error);
   }
- 
 };
+connect();
+
+module.exports = db;
+
