@@ -11,6 +11,7 @@ const createArticles = async () => {
     id SERIAL PRIMARY KEY,
     title TEXT,
     article TEXT,
+    category TEXT,
     user_id INT,
     created_on TIMESTAMP DEFAULT NOW(),
     updated_on TIMESTAMP
@@ -26,6 +27,7 @@ const createArticles = async () => {
   // Dummy article data
   const articleData = {
     title: "Love is great",
+    category: 'Love',
     article:
       "Just one small positive thought in the morning can change your whole day. Just one small positive thought in the morning can change your whole day.",
   };

@@ -1,6 +1,7 @@
 const db = require("../db/db");
 const cloudinary = require("../cloudinary-config");
 const { createGifTable } = require("../db/queries/set-up-gif-table");
+const { STATUSCODE, successResponse, errorResponse } = require("../utilities/response-utility");
 
 createGifTable();
 
@@ -9,7 +10,7 @@ const createGif = async (req, res) => {
   const userId = req.user?.id;
   // get user id from the authenticated user details
 
-  const { base64EncodedGif, title } = req.body;
+  const { base64EncodedGif, title, category } = req.body;
 
   try {
     const uploadResult = await cloudinary.v2.uploader.upload(base64EncodedGif, {
@@ -18,11 +19,11 @@ const createGif = async (req, res) => {
 
     // Insert the URL from cloudinary, title, and user ID into the gifs table
     const insertQuery = `
-    INSERT INTO gifs (url, title, user_id)
-    VALUES ($1, $2, $3) RETURNING *;
+    INSERT INTO gifs (url, title, category, user_id)
+    VALUES ($1, $2, $3, $4) RETURNING *;
     `;
     const uploadedImageUrl = uploadResult.secure_url;
-    const insertValues = [uploadedImageUrl, title, userId];
+    const insertValues = [uploadedImageUrl, title, category, userId];
     const insertResult = await db.query(insertQuery, insertValues);
     const result = insertResult.rows[0];
     const gifId = result.id;
@@ -36,6 +37,7 @@ const createGif = async (req, res) => {
         message: "GIF image successfully posted",
         createdOn: createdOn,
         title: title,
+        category: category,
         imageUrl: uploadedImageUrl,
       },
     });
@@ -50,13 +52,14 @@ const createGif = async (req, res) => {
 
 const getAllGifs = async (req, res) => {
   try {
-    const selectQuery = "SELECT * FROM gifs";
+    const selectQuery = "SELECT * FROM gifs ORDER BY created_on DESC";
     const result = await db.query(selectQuery);
     const gifsData = result.rows.map((row) => {
       return {
         gifId: row.id,
         imageUrl: row.url,
         title: row.title,
+        category: row.category,
         userId: row.user_id,
         createdOn: row.created_on,
       };

@@ -2,6 +2,12 @@ const bcrypt = require("bcrypt");
 const db = require("../db/db");
 require("dotenv").config();
 const { createUsersAccount } = require("../db/queries/set-up-user-table");
+const {
+  STATUS,
+  STATUSCODE,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 // create user table for testing purposes
 createUsersAccount();
@@ -25,10 +31,9 @@ const createUser = async (req, res) => {
   const emailExists = emailCheckResult.rows[0].count > 0;
 
   if (emailExists) {
-    return res.status(400).json({
-      status: "error",
-      error: "Email already exists",
-    });
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Email already exists"));
   }
 
   const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -66,7 +71,6 @@ const createUser = async (req, res) => {
         role: createdUser.role,
         firstName: createdUser.firstName,
         lastName: createdUser.lastName,
-        password: createdUser.password,
         gender: createdUser.gender,
         job_role: createdUser.job_role,
         department: createdUser.department,
@@ -76,10 +80,11 @@ const createUser = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while creating users",
-    });
+    return res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while creating users")
+      );
   }
 };
 
@@ -87,7 +92,7 @@ const getAllUsers = async (req, res) => {
   const userRole = req.user?.role;
 
   // Check if the authenticated user is an admin
-  if ( userRole !== "admin") {
+  if (userRole !== "admin") {
     return res.status(403).json({
       status: "error",
       error: "Only admin users can access this resource",
@@ -109,4 +114,3 @@ const getAllUsers = async (req, res) => {
 };
 
 module.exports = { createUser, getAllUsers };
-

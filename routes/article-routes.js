@@ -9,6 +9,9 @@ const {
   getAllArticlesByUserId,
   getAllArticles,
 } = require("../controller/article-controller");
+const {
+  createArticleComment,
+} = require("../controller/article-comment-controller");
 const authMiddleWare = require("../auth/auth-middle-ware");
 
 // employees create articles
@@ -27,6 +30,13 @@ router.get("/articles/:articleId", authMiddleWare, getArticleById);
 router.get("/articles/user/:userId", authMiddleware, getAllArticlesByUserId);
 
 // get all articles in the database
-router.get("/articles", getAllArticles);
+router.get("/articles", authMiddleware, getAllArticles);
+
+// post  articles comments in the database
+router.post(
+  "/articles/:articleId/comments",
+  authMiddleware,
+  createArticleComment
+);
 
 module.exports = router;

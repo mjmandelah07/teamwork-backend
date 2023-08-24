@@ -1,5 +1,6 @@
 const db = require("../db/db");
 const { createArticles } = require("../db/queries/set-up-article-table");
+const { STATUSCODE, successResponse, errorResponse } = require("../utilities/response-utility");
 
 // create article table for testing purposes
 createArticles();
@@ -10,16 +11,15 @@ const createArticle = async (req, res) => {
   const articleData = req.body;
 
   // Extract article data from the request body
-  const { title, article } = articleData;
+  const { title, article, category } = articleData;
 
   // Insert the article data into the articles table
   const insertArticleQuery = `
-  INSERT INTO articles (title, article, user_id) 
-  VALUES ($1, $2, $3) RETURNING *;
+  INSERT INTO articles (title, article, category, user_id) 
+  VALUES ($1, $2, $3, $4) RETURNING *;
 `;
 
-
-  const articleValues = [title, article, userId] ;
+  const articleValues = [title, article, category, userId] ;
 
   try {
     const result = await db.query(insertArticleQuery, articleValues);
@@ -30,9 +30,10 @@ const createArticle = async (req, res) => {
       status: "success",
       data: {
         message: "Article successfully posted",
-        articleId: createdArticle.id,
+        id: createdArticle.id,
         createdOn: createdArticle.created_on,
         title: createdArticle.title,
+        category: createdArticle.category,
         article: createdArticle.article,
         userId: createdArticle.user_id,
       },
@@ -47,20 +48,20 @@ const createArticle = async (req, res) => {
 };
 
 const updateArticlebyId = async (req, res) => {
-  const { title, article } = req.body;
+  const { title, article, category } = req.body;
   const userId = req.user?.id;
   const articleId = req.params.articleId;
 
   try {
     const updateQuery = `
         UPDATE articles 
-        SET title = $1, article = $2, updated_on = $3
-        WHERE id = $4 AND user_id = $5
+        SET title = $1, article = $2, category = $3, updated_on = $4
+        WHERE id = $5 AND user_id = $6
         RETURNING *;
       `;
 
     const updatedOn = new Date();
-    const updateValues = [title, article, updatedOn, articleId, userId];
+    const updateValues = [title, article, category, updatedOn, articleId, userId];
     const updateResult = await db.query(updateQuery, updateValues);
 
     if (updateResult.rowCount === 0) {
@@ -76,10 +77,11 @@ const updateArticlebyId = async (req, res) => {
       status: "success",
       data: {
         message: "Article successfully updated",
-        articleId: articleId,
+        id: articleId,
         updatedOn: updatedArticle.created_on,
         title: updatedArticle.title,
         article: updatedArticle.article,
+        category: updatedArticle.category,
         updated_on: updatedArticle.updated_on,
       },
     });
@@ -142,22 +144,21 @@ const deleteArticleById = async (req, res) => {
 };
 
 const getArticleById = async (req, res) => {
-  const userId = req.user?.id;
   const articleId = req.params.articleId;
 
   try {
     const selectQuery = `
         SELECT *
         FROM articles
-        WHERE id = $1 AND user_id = $2;
+        WHERE id = $1;
       `;
-    const selectValues = [articleId, userId];
+    const selectValues = [articleId];
     const result = await db.query(selectQuery, selectValues);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         status: "error",
-        error: "Article not found or not authorized to access",
+        error: "Article not found",
       });
     }
 
@@ -166,9 +167,10 @@ const getArticleById = async (req, res) => {
     res.status(200).json({
       status: "success",
       data: {
-        articleId: article.id,
+        id: article.id,
         title: article.title,
         article: article.article,
+        category: article.category,
         createdOn: article.created_on,
       },
     });
@@ -182,13 +184,27 @@ const getArticleById = async (req, res) => {
 };
 
 const getAllArticlesByUserId = async (req, res) => {
-  const userId = req.user?.id;
+  const userId = req.params.userId;
+
+  // check if user exists first before getting articles
+  const userQuery = "SELECT EXISTS (SELECT 1 FROM users WHERE id = $1) AS id_exists;"
+  const userValue = [userId]
+  const userExistResult = await db.query(userQuery, userValue);
+  const userExist = userExistResult.rows[0].id_exists;
+
+  if (!userExist) {
+    return res.status(404).json({
+      status: "error",
+      error: "User not found",
+    });
+  }
 
   try {
     const selectQuery = `
         SELECT *
         FROM articles
-        WHERE user_id = $1;
+        WHERE user_id = $1 
+        ORDER BY created_on DESC;
       `;
     const selectValues = [userId];
     const result = await db.query(selectQuery, selectValues);
@@ -198,9 +214,10 @@ const getAllArticlesByUserId = async (req, res) => {
     res.status(200).json({
       status: "success",
       data: articles.map((article) => ({
-        articleId: article.id,
+        id: article.id,
         title: article.title,
         article: article.article,
+        category: article.category,
         createdOn: article.created_on,
       })),
     });
@@ -217,7 +234,8 @@ const getAllArticles = async (req, res) => {
   try {
     const selectQuery = `
         SELECT *
-        FROM articles;
+        FROM articles 
+        ORDER BY created_on DESC;
       `;
     const result = await db.query(selectQuery);
 
@@ -226,9 +244,10 @@ const getAllArticles = async (req, res) => {
     res.status(200).json({
       status: "success",
       data: articles.map((article) => ({
-        articleId: article.id,
+        id: article.id,
         title: article.title,
         article: article.article,
+        category: article.category,
         userId: article.user_id,
         createdOn: article.created_on,
       })),
