@@ -99,7 +99,11 @@ const getAllUsers = async (req, res) => {
     });
   }
   try {
-    const result = await db.query("SELECT * FROM users");
+    const userQuery = `
+    SELECT id, email, role, firstName, lastName, gender, job_role, department, address, created_on
+    FROM users;
+    `
+    const result = await db.query(userQuery);
     res.status(200).json({
       status: "success",
       data: result.rows,
