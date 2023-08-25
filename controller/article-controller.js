@@ -1,6 +1,11 @@
 const db = require("../db/db");
 const { createArticles } = require("../db/queries/set-up-article-table");
-const { STATUSCODE, successResponse, errorResponse } = require("../utilities/response-utility");
+const {
+  STATUSCODE,
+  STATUS,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 // create article table for testing purposes
 createArticles();
@@ -19,31 +24,35 @@ const createArticle = async (req, res) => {
   VALUES ($1, $2, $3, $4) RETURNING *;
 `;
 
-  const articleValues = [title, article, category, userId] ;
+  const articleValues = [title, article, category, userId];
 
   try {
     const result = await db.query(insertArticleQuery, articleValues);
     const createdArticle = result.rows[0];
+    const responseData = {
+      message: "Article successfully posted",
+      id: createdArticle.id,
+      createdOn: createdArticle.created_on,
+      title: createdArticle.title,
+      category: createdArticle.category,
+      article: createdArticle.article,
+      userId: createdArticle.user_id,
+    };
 
     // Send the response if successful
-    res.status(201).json({
-      status: "success",
-      data: {
-        message: "Article successfully posted",
-        id: createdArticle.id,
-        createdOn: createdArticle.created_on,
-        title: createdArticle.title,
-        category: createdArticle.category,
-        article: createdArticle.article,
-        userId: createdArticle.user_id,
-      },
-    });
+    res
+      .status(STATUSCODE.CREATED)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while posting the article",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while posting the article"
+        )
+      );
   }
 };
 
@@ -61,36 +70,46 @@ const updateArticlebyId = async (req, res) => {
       `;
 
     const updatedOn = new Date();
-    const updateValues = [title, article, category, updatedOn, articleId, userId];
+    const updateValues = [
+      title,
+      article,
+      category,
+      updatedOn,
+      articleId,
+      userId,
+    ];
     const updateResult = await db.query(updateQuery, updateValues);
 
     if (updateResult.rowCount === 0) {
-      return res.status(404).json({
-        status: "error",
-        error: "Article not found or not authorized to edit",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Article not found or not authorized to edit"
+          )
+        );
     }
 
     const updatedArticle = updateResult.rows[0];
+    const responseData = {
+      message: "Article successfully updated",
+      id: articleId,
+      createdOn: updatedArticle.created_on,
+      title: updatedArticle.title,
+      article: updatedArticle.article,
+      category: updatedArticle.category,
+      updated_on: updatedArticle.updated_on,
+    };
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        message: "Article successfully updated",
-        id: articleId,
-        updatedOn: updatedArticle.created_on,
-        title: updatedArticle.title,
-        article: updatedArticle.article,
-        category: updatedArticle.category,
-        updated_on: updatedArticle.updated_on,
-      },
-    });
+    res.status(200).json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error("Error updating article:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while updating article",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while updating article")
+      );
   }
 };
 
@@ -108,10 +127,14 @@ const deleteArticleById = async (req, res) => {
         authorResult.rows.length === 0 ||
         authorResult.rows[0].user_id !== userId
       ) {
-        return res.status(403).json({
-          status: "error",
-          error: "Access denied: You are not authorized to delete this article",
-        });
+        return res
+          .status(STATUSCODE.FORBIDDEN)
+          .json(
+            errorResponse(
+              STATUS.Error,
+              "Access denied: You are not authorized to delete this article"
+            )
+          );
       }
     }
     const deleteQuery = `
@@ -122,24 +145,26 @@ const deleteArticleById = async (req, res) => {
     const deleteResult = await db.query(deleteQuery, deleteValues);
 
     if (deleteResult.rowCount === 0) {
-      return res.status(404).json({
-        status: "error",
-        error: "Article not found or not authorized to delete",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Article not found or not authorized to delete"
+          )
+        );
     }
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        message: "Article successfully deleted",
-      },
-    });
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Article successfully deleted"));
   } catch (error) {
     console.error("Error deleting article:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while deleting article",
-    });
+    res
+      .status(500)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while deleting article")
+      );
   }
 };
 
@@ -147,6 +172,7 @@ const getArticleById = async (req, res) => {
   const articleId = req.params.articleId;
 
   try {
+    // Fetch the articles from the database
     const selectQuery = `
         SELECT *
         FROM articles
@@ -156,30 +182,54 @@ const getArticleById = async (req, res) => {
     const result = await db.query(selectQuery, selectValues);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        status: "error",
-        error: "Article not found",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Article not found"));
     }
 
     const article = result.rows[0];
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        id: article.id,
-        title: article.title,
-        article: article.article,
-        category: article.category,
-        createdOn: article.created_on,
-      },
+    // Fetch comments for the article
+    const commentsQuery = `
+      SELECT *
+      FROM article_comments
+      WHERE article_id = $1
+      ORDER BY created_on DESC;
+    `;
+    const commentsResult = await db.query(commentsQuery, [articleId]);
+    const commentRows = commentsResult.rows;
+    const comments = commentRows.map((data) => {
+      return {
+        id: data.id,
+        comment: data.comment,
+        authorId: data.user_id,
+        authorName: data.user_name,
+        createdOn: data.created_on,
+      };
     });
+
+    const responseData = {
+      id: article.id,
+      title: article.title,
+      article: article.article,
+      category: article.category,
+      createdOn: article.created_on,
+      comments: comments,
+    };
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error("Error retrieving article:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while retrieving article",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while retrieving article"
+        )
+      );
   }
 };
 
@@ -187,16 +237,16 @@ const getAllArticlesByUserId = async (req, res) => {
   const userId = req.params.userId;
 
   // check if user exists first before getting articles
-  const userQuery = "SELECT EXISTS (SELECT 1 FROM users WHERE id = $1) AS id_exists;"
-  const userValue = [userId]
+  const userQuery =
+    "SELECT EXISTS (SELECT 1 FROM users WHERE id = $1) AS id_exists;";
+  const userValue = [userId];
   const userExistResult = await db.query(userQuery, userValue);
   const userExist = userExistResult.rows[0].id_exists;
 
   if (!userExist) {
-    return res.status(404).json({
-      status: "error",
-      error: "User not found",
-    });
+    return res
+      .status(STATUSCODE.NOT_FOUND)
+      .json(errorResponse(STATUS.Error, "User not found"));
   }
 
   try {
@@ -210,23 +260,27 @@ const getAllArticlesByUserId = async (req, res) => {
     const result = await db.query(selectQuery, selectValues);
 
     const articles = result.rows;
+    const responseData = articles.map((article) => ({
+      id: article.id,
+      title: article.title,
+      article: article.article,
+      category: article.category,
+      createdOn: article.created_on,
+    }));
 
-    res.status(200).json({
-      status: "success",
-      data: articles.map((article) => ({
-        id: article.id,
-        title: article.title,
-        article: article.article,
-        category: article.category,
-        createdOn: article.created_on,
-      })),
-    });
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error("Error retrieving articles:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while retrieving articles",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while retrieving article"
+        )
+      );
   }
 };
 
@@ -240,24 +294,27 @@ const getAllArticles = async (req, res) => {
     const result = await db.query(selectQuery);
 
     const articles = result.rows;
-
-    res.status(200).json({
-      status: "success",
-      data: articles.map((article) => ({
-        id: article.id,
-        title: article.title,
-        article: article.article,
-        category: article.category,
-        userId: article.user_id,
-        createdOn: article.created_on,
-      })),
-    });
+    const responseData = articles.map((article) => ({
+      id: article.id,
+      title: article.title,
+      article: article.article,
+      category: article.category,
+      userId: article.user_id,
+      createdOn: article.created_on,
+    }));
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error("Error retrieving articles:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while retrieving articles",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while retrieving article"
+        )
+      );
   }
 };
 module.exports = {
@@ -268,4 +325,3 @@ module.exports = {
   getAllArticlesByUserId,
   getAllArticles,
 };
-

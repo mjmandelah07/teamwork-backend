@@ -10,7 +10,7 @@ const STATUSCODE = {
 };
 
 const STATUS = {
-  Sucess: "sucess",
+  Success: "success",
   Error: "error",
 };
 

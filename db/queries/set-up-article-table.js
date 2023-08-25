@@ -20,19 +20,19 @@ const createArticles = async () => {
 
   // Insert the articles
   const insertArticleQuery = `
-      INSERT INTO articles (title, article, user_id) 
-      VALUES ($1, $2, $3);
+      INSERT INTO articles (title, article, category, user_id) 
+      VALUES ($1, $2, $3, $4);
     `;
 
   // Dummy article data
   const articleData = {
     title: "Love is great",
-    category: 'Love',
     article:
       "Just one small positive thought in the morning can change your whole day. Just one small positive thought in the morning can change your whole day.",
+      category: 'Love',
   };
 
-  const insertArticleValues = [articleData.title, articleData.article, 1];
+  const insertArticleValues = [articleData.title, articleData.article, articleData.category, 1];
 
   try {
     // Drop the table if it exists

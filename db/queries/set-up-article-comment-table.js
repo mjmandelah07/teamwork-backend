@@ -10,17 +10,18 @@ const articleCommentTable = async () => {
     id SERIAL PRIMARY KEY,
     user_id INT,
     article_id INT,
+    user_name TEXT,
     comment TEXT,
     created_on TIMESTAMP DEFAULT NOW()
   );
 `;
   // Insert dummy data
   const insertDummyData = `
-  INSERT INTO article_comments (user_id, article_id, comment)
+  INSERT INTO article_comments (user_id, article_id, user_name, comment)
   VALUES
-    ($1, $2, $3); 
+    ($1, $2, $3, $4); 
 `;
-  const insertArticleCommentValues = [1, 1, "very fantastic"];
+  const insertArticleCommentValues = [1, 1, "Yemi seun", "very fantastic"];
 
   try {
     // Drop the table if it exists
@@ -28,7 +29,7 @@ const articleCommentTable = async () => {
 
     // Create the article comment table
     await db.query(createArticleCommentTable);
-    console.log("articles table created");
+    console.log("articles comment table created");
 
     // Insert dummy user data
     await db.query(insertDummyData, insertArticleCommentValues);

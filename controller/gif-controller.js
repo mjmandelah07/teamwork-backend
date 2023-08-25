@@ -1,7 +1,12 @@
 const db = require("../db/db");
 const cloudinary = require("../cloudinary-config");
 const { createGifTable } = require("../db/queries/set-up-gif-table");
-const { STATUSCODE, successResponse, errorResponse } = require("../utilities/response-utility");
+const {
+  STATUSCODE,
+  STATUS,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 createGifTable();
 
@@ -28,56 +33,58 @@ const createGif = async (req, res) => {
     const result = insertResult.rows[0];
     const gifId = result.id;
     const createdOn = result.created_on;
+    const responseData = {
+      id: gifId,
+      message: "GIF image successfully posted",
+      createdOn: createdOn,
+      title: title,
+      category: category,
+      imageUrl: uploadedImageUrl,
+    };
 
     // Send the response if successful
-    res.status(201).json({
-      status: "success",
-      data: {
-        gifId: gifId,
-        message: "GIF image successfully posted",
-        createdOn: createdOn,
-        title: title,
-        category: category,
-        imageUrl: uploadedImageUrl,
-      },
-    });
+    res
+      .status(STATUSCODE.CREATED)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while creating gif",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while creating gif")
+      );
   }
 };
 
+// get all the gifs
 const getAllGifs = async (req, res) => {
   try {
     const selectQuery = "SELECT * FROM gifs ORDER BY created_on DESC";
     const result = await db.query(selectQuery);
     const gifsData = result.rows.map((row) => {
       return {
-        gifId: row.id,
+        id: row.id,
         imageUrl: row.url,
         title: row.title,
+        url: row.url,
         category: row.category,
         userId: row.user_id,
         createdOn: row.created_on,
       };
     });
 
-    res.json({
-      status: "success",
-      data: gifsData,
-    });
+    res.status(STATUSCODE.OK).json(successResponse(STATUS.Success, gifsData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while fetching gif",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while fetching gif")
+      );
   }
 };
 
+// delete the gif from the server by its id
 const deleteGifById = async (req, res) => {
   const userId = req.user?.id;
   const userRole = req.user?.role;
@@ -92,12 +99,18 @@ const deleteGifById = async (req, res) => {
         authorResult.rows.length === 0 ||
         authorResult.rows[0].user_id !== userId
       ) {
-        return res.status(403).json({
-          status: "error",
-          error: "Access denied: You are not authorized to delete this gif",
-        });
+        return res
+          .status(STATUSCODE.FORBIDDEN)
+          .json(
+            errorResponse(
+              STATUS.Error,
+              "Access denied: You are not authorized to delete this gif"
+            )
+          );
       }
     }
+
+    // delete the gif from the server
     const deleteQuery = `
         DELETE FROM gifs
         WHERE id = $1;
@@ -106,26 +119,27 @@ const deleteGifById = async (req, res) => {
     const deleteResult = await db.query(deleteQuery, deleteValues);
 
     if (deleteResult.rowCount === 0) {
-      return res.status(404).json({
-        status: "error",
-        error: "Gif not found or not authorized to delete",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Gif not found or not authorized to delete"
+          )
+        );
     }
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        message: "gif post successfully deleted",
-      },
-    });
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "gif post successfully deleted"));
   } catch (error) {
     console.error("Error deleting Gif:", error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while deleting Gif",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while deleting Gif")
+      );
   }
 };
-
 
 module.exports = { createGif, getAllGifs, deleteGifById };

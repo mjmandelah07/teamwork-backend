@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { createGif, getAllGifs, deleteGifById  } = require("../controller/gif-controller");
+const {
+  createGif,
+  getAllGifs,
+  deleteGifById,
+} = require("../controller/gif-controller");
+const { createGifComment } = require("../controller/gif-comment-controller");
 
 const authMiddleware = require("../auth/auth-middle-ware");
 
@@ -13,6 +18,8 @@ router.get("/", getAllGifs);
 // employees can delete gifs
 router.delete("/gifs/:gifId", authMiddleware, deleteGifById);
 
+// employees can comment on gifs
+router.post("/gifs/:gifId/comments", authMiddleware, createGifComment);
 
 module.exports = router;
 

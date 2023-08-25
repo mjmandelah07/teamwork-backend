@@ -18,10 +18,9 @@ const createUser = async (req, res) => {
 
   // Check if the authenticated user is an admin
   if (userRole !== "admin") {
-    return res.status(403).json({
-      status: "error",
-      error: "Only admin users can create account",
-    });
+    return res
+      .status(STATUSCODE.FORBIDDEN)
+      .json(errorResponse(STATUS.Error, "Only admin users can create account"));
   }
 
   // Check if email already exists
@@ -60,24 +59,24 @@ const createUser = async (req, res) => {
   try {
     const result = await db.query(insertUserDataQuery, values);
     const createdUser = result.rows[0];
+    const reponseData = {
+      message: "User account successfully created",
+      userId: createdUser.id,
+      email: createdUser.email,
+      role: createdUser.role,
+      firstName: createdUser.firstName,
+      lastName: createdUser.lastName,
+      gender: createdUser.gender,
+      job_role: createdUser.job_role,
+      department: createdUser.department,
+      address: createdUser.address,
+      created_on: createdUser.created_on,
+    };
 
     // Send the token and user details in the response
-    res.status(201).json({
-      status: "success",
-      data: {
-        message: "User account successfully created",
-        userId: createdUser.id,
-        email: createdUser.email,
-        role: createdUser.role,
-        firstName: createdUser.firstName,
-        lastName: createdUser.lastName,
-        gender: createdUser.gender,
-        job_role: createdUser.job_role,
-        department: createdUser.department,
-        address: createdUser.address,
-        created_on: createdUser.created_on,
-      },
-    });
+    res
+      .status(STATUSCODE.CREATED)
+      .json(successResponse(STATUS.Success, reponseData));
   } catch (error) {
     console.error(error);
     return res
@@ -93,27 +92,25 @@ const getAllUsers = async (req, res) => {
 
   // Check if the authenticated user is an admin
   if (userRole !== "admin") {
-    return res.status(403).json({
-      status: "error",
-      error: "Only admin users can access this resource",
-    });
+    return res
+      .status(STATUSCODE.FORBIDDEN)
+      .json(STATUS.Error, "Only admin users can access this resource");
   }
   try {
     const userQuery = `
     SELECT id, email, role, firstName, lastName, gender, job_role, department, address, created_on
     FROM users;
-    `
+    `;
     const result = await db.query(userQuery);
-    res.status(200).json({
-      status: "success",
-      data: result.rows,
-    });
+    const responseData = result.rows;
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while fetching users",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(errorResponse(STATUS.Error, "An error occurred while fetching users"));
   }
 };
 

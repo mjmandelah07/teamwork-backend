@@ -1,15 +1,19 @@
 const jwt = require("jsonwebtoken");
 const db = require("../db/db");
 require("dotenv").config();
+const {
+  STATUSCODE,
+  STATUS,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 module.exports = async (req, res, next) => {
   const token = req.header("Authorization");
 
   if (!token) {
-    return res.status(401).json({
-      status: "error",
-      error: "Access denied",
-    });
+    return res
+      .status(STATUSCODE.UNAUTHORIZED)
+      .json(errorResponse(STATUS.Error, "Access denied"));
   }
 
   try {
@@ -18,20 +22,17 @@ module.exports = async (req, res, next) => {
       decoded.userId,
     ]);
     if (!result.rows.length) {
-      return res.status(404).json({
-        status: "error",
-        error: "User not found",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "User not found"));
     }
 
-   
     req.user = result.rows[0];
     next();
   } catch (error) {
     console.error("Error authenticating user:", error);
-    res.status(401).json({
-      status: "error",
-      error: "Error authenticating user",
-    });
+    res
+      .status(STATUSCODE.UNAUTHORIZED)
+      .json(errorResponse(STATUS.Error, "Error authenticating user"));
   }
 };
