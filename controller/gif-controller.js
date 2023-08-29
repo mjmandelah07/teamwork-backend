@@ -91,23 +91,32 @@ const deleteGifById = async (req, res) => {
   const gifId = req.params.gifId;
 
   try {
-    if (userRole !== "admin") {
-      const authorQuery = "SELECT user_id FROM gifs WHERE id = $1";
-      const authorResult = await db.query(authorQuery, [gifId]);
+    // Check if the GIF exists and get its owner's ID
+    const gifQuery = `
+      SELECT user_id
+      FROM gifs
+      WHERE id = $1;
+    `;
+    const gifResult = await db.query(gifQuery, [gifId]);
 
-      if (
-        authorResult.rows.length === 0 ||
-        authorResult.rows[0].user_id !== userId
-      ) {
-        return res
-          .status(STATUSCODE.FORBIDDEN)
-          .json(
-            errorResponse(
-              STATUS.Error,
-              "Access denied: You are not authorized to delete this gif"
-            )
-          );
-      }
+    if (gifResult.rows.length === 0) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "GIF not found"));
+    }
+    // Gif owner if it exist
+    const gifOwnerId = gifResult.rows[0].user_id;
+
+    // Check if the deleter is an admin or the owner of the GIF
+    if (userRole !== "admin" && gifOwnerId !== userId) {
+      return res
+        .status(STATUSCODE.FORBIDDEN)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Access denied: You are not authorized to delete this GIF"
+          )
+        );
     }
 
     // delete the gif from the server

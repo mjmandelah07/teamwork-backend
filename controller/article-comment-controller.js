@@ -24,30 +24,32 @@ const createArticleComment = async (req, res) => {
           FROM articles
           WHERE id = $1;
         `;
-     // Fetch the commentor name 
-     const userQuery = `
+    // Fetch the commentor name
+    const userQuery = `
      SELECT firstName, lastName FROM users 
      WHERE id = $1;
-     `;  
-     // Article variables
+     `;
+    // Article variables
     const articleResult = await db.query(articleQuery, [articleId]);
-    const articleTitle = articleResult.rows[0].title;
-    const articleContent = articleResult.rows[0].article;
-    // User variables
-    const userResult = await db.query(userQuery, [userId]);
-    const AuthorName = userResult.rows[0].firstName + ' ' + userResult.rows[0].lastName;
-
     if (!articleResult.rows.length) {
       return res
         .status(STATUSCODE.NOT_FOUND)
         .json(errorResponse(STATUS.Error, "Article not found"));
     }
+
     if (!userResult.rows.length) {
       return res
         .status(STATUSCODE.NOT_FOUND)
         .json(errorResponse(STATUS.Error, "User not found"));
     }
 
+    // Article variables
+    const articleTitle = articleResult.rows[0].title;
+    const articleContent = articleResult.rows[0].article;
+    // User variables
+    const userResult = await db.query(userQuery, [userId]);
+    const AuthorName =
+      userResult.rows[0].firstName + " " + userResult.rows[0].lastName;
 
     // Insert the comment into the comments table
     const insertCommentQuery = `
