@@ -61,17 +61,33 @@ const getAllGifs = async (req, res) => {
   try {
     const selectQuery = "SELECT * FROM gifs ORDER BY created_on DESC";
     const result = await db.query(selectQuery);
-    const gifsData = result.rows.map((row) => {
-      return {
-        id: row.id,
-        imageUrl: row.url,
-        title: row.title,
-        url: row.url,
-        category: row.category,
-        userId: row.user_id,
-        createdOn: row.created_on,
-      };
-    });
+    const gifsData = await Promise.all(
+      result.rows.map(async (row) => {
+        const commentsQuery = `
+        SELECT *
+        FROM gif_comments
+        WHERE gif_id = $1;
+      `;
+        const commentsResult = await db.query(commentsQuery, [row.id]);
+        const comments = commentsResult.rows.map((commentRow) => ({
+          id: commentRow.id,
+          comment: commentRow.comment,
+          authorId: commentRow.user_id,
+        }));
+        const commentData = {
+          id: row.id,
+          imageUrl: row.url,
+          title: row.title,
+          url: row.url,
+          category: row.category,
+          userId: row.user_id,
+          createdOn: row.created_on,
+          comments: comments,
+        };
+
+        return commentData;
+      })
+    );
 
     res.status(STATUSCODE.OK).json(successResponse(STATUS.Success, gifsData));
   } catch (error) {
