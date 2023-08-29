@@ -19,20 +19,17 @@ router.post("/signin", async (req, res) => {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
+    const user = result.rows[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!result.rows.length) {
       return res
         .status(STATUSCODE.BAD_REQUEST)
-        .json(errorResponse(STATUS.Error, "Invalid email"));
-    }
-
-    const user = result.rows[0];
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
+        .json(errorResponse(STATUS.Error, "Invalid Email or Password"));
+    }else if (!isPasswordValid) {
       return res
         .status(STATUSCODE.BAD_REQUEST)
-        .json(errorResponse(STATUS.Error, "Invalid Password"));
+        .json(errorResponse(STATUS.Error, "Invalid Email or Password"));
     }
 
     //  user data in the payload for token
