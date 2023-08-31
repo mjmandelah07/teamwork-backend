@@ -15,7 +15,6 @@ articleCommentTable();
 const createArticleComment = async (req, res) => {
   const { comment } = req.body;
   const userId = req.user?.id;
-
   const articleId = req.params.articleId;
 
   try {

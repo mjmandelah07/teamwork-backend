@@ -9,6 +9,8 @@ const articleRoutes = require("./routes/article-routes");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+
+app.use(cors())
 app.use(bodyParser.json());
 
 // Define a route handler for the root URL
