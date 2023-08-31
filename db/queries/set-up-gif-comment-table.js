@@ -10,16 +10,17 @@ const gifCommentTable = async () => {
     user_id INT,
     gif_id INT,
     comment TEXT,
+    user_name TEXT,
     created_on TIMESTAMP DEFAULT NOW()
   );
 `;
   // Insert dummy data
   const insertDummyData = `
-  INSERT INTO gif_comments (user_id, gif_id, comment)
+  INSERT INTO gif_comments (user_id, gif_id, user_name, comment)
   VALUES
-    ($1, $2, $3); 
+    ($1, $2, $3, $4); 
 `;
-  const insertGifCommentValues = [1, 1, "very fantastic"];
+  const insertGifCommentValues = [1, 1, "mojisola ayomi", "very fantastic"];
   try {
     // Drop the table if it exists
     await db.query(dropGifCommentTable);

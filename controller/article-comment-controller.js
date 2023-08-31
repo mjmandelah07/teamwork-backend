@@ -15,6 +15,7 @@ articleCommentTable();
 const createArticleComment = async (req, res) => {
   const { comment } = req.body;
   const userId = req.user?.id;
+
   const articleId = req.params.articleId;
 
   try {
@@ -24,18 +25,23 @@ const createArticleComment = async (req, res) => {
           FROM articles
           WHERE id = $1;
         `;
-    // Fetch the commentor name
-    const userQuery = `
-     SELECT firstName, lastName FROM users 
-     WHERE id = $1;
-     `;
-    // Article variables
+
     const articleResult = await db.query(articleQuery, [articleId]);
     if (!articleResult.rows.length) {
       return res
         .status(STATUSCODE.NOT_FOUND)
         .json(errorResponse(STATUS.Error, "Article not found"));
     }
+    const articleTitle = articleResult.rows[0].title;
+    const articleContent = articleResult.rows[0].article;
+
+    // Fetch the commentor name
+    const userQuery = `
+          SELECT *
+          FROM users 
+          WHERE id = $1;
+ `;
+    const userResult = await db.query(userQuery, [userId]);
 
     if (!userResult.rows.length) {
       return res
@@ -43,13 +49,8 @@ const createArticleComment = async (req, res) => {
         .json(errorResponse(STATUS.Error, "User not found"));
     }
 
-    // Article variables
-    const articleTitle = articleResult.rows[0].title;
-    const articleContent = articleResult.rows[0].article;
     // User variables
-    const userResult = await db.query(userQuery, [userId]);
-    const AuthorName =
-      userResult.rows[0].firstName + " " + userResult.rows[0].lastName;
+    const authorName = `${userResult.rows[0].firstname}  ${userResult.rows[0].lastname}`;
 
     // Insert the comment into the comments table
     const insertCommentQuery = `
@@ -57,7 +58,7 @@ const createArticleComment = async (req, res) => {
           VALUES ($1, $2, $3, $4)
           RETURNING created_on;
         `;
-    const insertCommentValues = [userId, articleId, AuthorName, comment];
+    const insertCommentValues = [userId, articleId, authorName, comment];
     const insertCommentResult = await db.query(
       insertCommentQuery,
       insertCommentValues

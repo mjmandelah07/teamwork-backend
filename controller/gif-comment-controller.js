@@ -29,15 +29,33 @@ const createGifComment = async (req, res) => {
         .json(errorResponse(STATUS.Error, "Gif not found"));
     }
 
+     // Fetch the commentor name
+     const userQuery = `
+     SELECT *
+     FROM users 
+     WHERE id = $1;
+`;
+const userResult = await db.query(userQuery, [userId]);
+
+if (!userResult.rows.length) {
+ return res
+   .status(STATUSCODE.NOT_FOUND)
+   .json(errorResponse(STATUS.Error, "User not found"));
+}
+
+// User variables
+const authorName = `${userResult.rows[0].firstname}  ${userResult.rows[0].lastname}`;
+
+
     const gifTitle = gifResult.rows[0].title;
 
     // Insert the comment into the gif_comments table
     const insertCommentQuery = `
-      INSERT INTO gif_comments (user_id, gif_id, comment)
-      VALUES ($1, $2, $3)
+      INSERT INTO gif_comments (user_id, gif_id, user_name, comment)
+      VALUES ($1, $2, $3, $4)
       RETURNING created_on;
     `;
-    const insertCommentValues = [userId, gifId, comment];
+    const insertCommentValues = [userId, gifId, authorName, comment];
     const insertCommentResult = await db.query(
       insertCommentQuery,
       insertCommentValues

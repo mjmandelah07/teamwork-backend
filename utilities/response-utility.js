@@ -29,6 +29,3 @@ const errorResponse = (status, data) => {
 };
 
 module.exports = { STATUSCODE, successResponse, errorResponse, STATUS };
-
-// usages
-// res.status(STATUSCODE.OK).json(successResponse(STATUS.Sucess, [], {}));

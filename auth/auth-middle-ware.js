@@ -19,7 +19,7 @@ module.exports = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const result = await db.query("SELECT * FROM users WHERE id = $1", [
-      decoded.userId,
+      decoded.userId
     ]);
     if (!result.rows.length) {
       return res
