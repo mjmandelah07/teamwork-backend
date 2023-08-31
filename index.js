@@ -1,6 +1,6 @@
 const express = require("express");
-const cors = require('cors');
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const userRoutes = require("./routes/user-routes");
 const authRoutes = require("./routes/auth-routes");
 const gifRoutes = require("./routes/gif-routes.js");
@@ -10,8 +10,10 @@ const articleRoutes = require("./routes/article-routes");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(bodyParser.json());
+// Enable cors
 app.use(cors());
+
+app.use(bodyParser.json());
 
 // Define a route handler for the root URL
 app.get("/", (req, res) => {
