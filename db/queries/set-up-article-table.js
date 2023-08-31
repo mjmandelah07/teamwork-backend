@@ -11,6 +11,7 @@ const createArticles = async () => {
     id SERIAL PRIMARY KEY,
     title TEXT,
     article TEXT,
+    category TEXT,
     user_id INT,
     created_on TIMESTAMP DEFAULT NOW(),
     updated_on TIMESTAMP
@@ -19,8 +20,8 @@ const createArticles = async () => {
 
   // Insert the articles
   const insertArticleQuery = `
-      INSERT INTO articles (title, article, user_id) 
-      VALUES ($1, $2, $3);
+      INSERT INTO articles (title, article, category, user_id) 
+      VALUES ($1, $2, $3, $4);
     `;
 
   // Dummy article data
@@ -28,9 +29,10 @@ const createArticles = async () => {
     title: "Love is great",
     article:
       "Just one small positive thought in the morning can change your whole day. Just one small positive thought in the morning can change your whole day.",
+      category: 'Love',
   };
 
-  const insertArticleValues = [articleData.title, articleData.article, 1];
+  const insertArticleValues = [articleData.title, articleData.article, articleData.category, 1];
 
   try {
     // Drop the table if it exists

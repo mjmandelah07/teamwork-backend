@@ -2,6 +2,12 @@ const bcrypt = require("bcrypt");
 const db = require("../db/db");
 require("dotenv").config();
 const { createUsersAccount } = require("../db/queries/set-up-user-table");
+const {
+  STATUS,
+  STATUSCODE,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 // create user table for testing purposes
 createUsersAccount();
@@ -12,10 +18,9 @@ const createUser = async (req, res) => {
 
   // Check if the authenticated user is an admin
   if (userRole !== "admin") {
-    return res.status(403).json({
-      status: "error",
-      error: "Only admin users can create account",
-    });
+    return res
+      .status(STATUSCODE.FORBIDDEN)
+      .json(errorResponse(STATUS.Error, "Only admin users can create account"));
   }
 
   // Check if email already exists
@@ -25,10 +30,9 @@ const createUser = async (req, res) => {
   const emailExists = emailCheckResult.rows[0].count > 0;
 
   if (emailExists) {
-    return res.status(400).json({
-      status: "error",
-      error: "Email already exists",
-    });
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Email already exists"));
   }
 
   const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -55,31 +59,31 @@ const createUser = async (req, res) => {
   try {
     const result = await db.query(insertUserDataQuery, values);
     const createdUser = result.rows[0];
+    const reponseData = {
+      message: "User account successfully created",
+      userId: createdUser.id,
+      email: createdUser.email,
+      role: createdUser.role,
+      firstName: createdUser.firstName,
+      lastName: createdUser.lastName,
+      gender: createdUser.gender,
+      job_role: createdUser.job_role,
+      department: createdUser.department,
+      address: createdUser.address,
+      created_on: createdUser.created_on,
+    };
 
     // Send the token and user details in the response
-    res.status(201).json({
-      status: "success",
-      data: {
-        message: "User account successfully created",
-        userId: createdUser.id,
-        email: createdUser.email,
-        role: createdUser.role,
-        firstName: createdUser.firstName,
-        lastName: createdUser.lastName,
-        password: createdUser.password,
-        gender: createdUser.gender,
-        job_role: createdUser.job_role,
-        department: createdUser.department,
-        address: createdUser.address,
-        created_on: createdUser.created_on,
-      },
-    });
+    res
+      .status(STATUSCODE.CREATED)
+      .json(successResponse(STATUS.Success, reponseData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while creating users",
-    });
+    return res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while creating users")
+      );
   }
 };
 
@@ -87,26 +91,27 @@ const getAllUsers = async (req, res) => {
   const userRole = req.user?.role;
 
   // Check if the authenticated user is an admin
-  if ( userRole !== "admin") {
-    return res.status(403).json({
-      status: "error",
-      error: "Only admin users can access this resource",
-    });
+  if (userRole !== "admin") {
+    return res
+      .status(STATUSCODE.FORBIDDEN)
+      .json(STATUS.Error, "Only admin users can access this resource");
   }
   try {
-    const result = await db.query("SELECT * FROM users");
-    res.status(200).json({
-      status: "success",
-      data: result.rows,
-    });
+    const userQuery = `
+    SELECT id, email, role, firstName, lastName, gender, job_role, department, address, created_on
+    FROM users;
+    `;
+    const result = await db.query(userQuery);
+    const responseData = result.rows;
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: "An error occurred while fetching users",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(errorResponse(STATUS.Error, "An error occurred while fetching users"));
   }
 };
 
 module.exports = { createUser, getAllUsers };
-

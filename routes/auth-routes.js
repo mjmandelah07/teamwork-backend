@@ -3,6 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../db/db");
 require("dotenv").config();
+const {
+  STATUSCODE,
+  STATUS,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
 
 const router = express.Router();
 
@@ -13,20 +19,17 @@ router.post("/signin", async (req, res) => {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
-
-    if (!result.rows.length) {
-      return res.status(400).json({ 
-        status: 'error',
-        error: "Invalid email" });
-    }
-
     const user = result.rows[0];
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-      return res.status(400).json({ 
-        status: 'error',
-        error: "Invalid password" });
+    if (!user) {
+      return res
+        .status(STATUSCODE.BAD_REQUEST)
+        .json(errorResponse(STATUS.Error, "Invalid Email or Password"));
+    }else if (!isPasswordValid) {
+      return res
+        .status(STATUSCODE.BAD_REQUEST)
+        .json(errorResponse(STATUS.Error, "Invalid Email or Password"));
     }
 
     //  user data in the payload for token
@@ -41,24 +44,25 @@ router.post("/signin", async (req, res) => {
       expiresIn: "24h",
     });
 
+    const responseData = {
+      message: "Logged in successfully",
+      token: token,
+      userId: user.id,
+      userRole: user.role,
+    };
+
     // Send the token and user details in the response
-    res.status(200).json({
-      status: "success",
-      data: {
-        message: "Logged in successfully",
-        token: token,
-        userId: user.id,
-        userRole: user.role,
-      },
-    });
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
-    res.status(401).json({
-      status: "error",
-      error: "An error occurred while login attempt",
-    });
+    res
+      .status(STATUSCODE.UNAUTHORIZED)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while login attempt")
+      );
   }
 });
 
 module.exports = router;
-

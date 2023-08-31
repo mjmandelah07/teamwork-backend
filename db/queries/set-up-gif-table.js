@@ -9,6 +9,7 @@ const createGifTable = async () => {
             id SERIAL PRIMARY KEY,
             url TEXT,
             title TEXT,
+            category TEXT,
             user_id INT,
             created_on TIMESTAMP DEFAULT NOW()
           );
@@ -16,13 +17,14 @@ const createGifTable = async () => {
 
   // Insert the URL from cloudinary, title, and user ID into the gifs table
   const insertQuery = `
-    INSERT INTO gifs (url, title, user_id)
-    VALUES ($1, $2, $3) RETURNING *;
+    INSERT INTO gifs (url, title, category, user_id)
+    VALUES ($1, $2, $3, $4) RETURNING *;
     `;
 
   const values = [
     "https://i0.wp.com/www.galvanizeaction.org/wp-content/uploads/2022/06/muppets-we-belong.gif?resize=245%2C205&ssl=1",
     "belonging",
+    'lOVE',
     1,
   ];
   try {
