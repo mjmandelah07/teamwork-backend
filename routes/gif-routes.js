@@ -5,7 +5,12 @@ const {
   getAllGifs,
   deleteGifById,
 } = require("../controller/gif-controller");
-const { createGifComment, deleteGifCommentById } = require("../controller/gif-comment-controller");
+
+const {
+  createGifComment,
+  deleteGifCommentById,
+  updateGifCommentById,
+} = require("../controller/gif-comment-controller");
 
 const authMiddleware = require("../auth/auth-middle-ware");
 
@@ -28,5 +33,11 @@ router.delete(
   deleteGifCommentById
 );
 
-module.exports = router;
+// employees can update comment on gifs
+router.patch(
+  "/gifs/:gifId/comments/:commentId",
+  authMiddleware,
+  updateGifCommentById
+);
 
+module.exports = router;

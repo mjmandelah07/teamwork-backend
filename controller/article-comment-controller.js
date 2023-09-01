@@ -87,7 +87,6 @@ const createArticleComment = async (req, res) => {
   }
 };
 
-
 // employee and admin can delete comments
 const deleteArticleCommentById = async (req, res) => {
   const userId = req.user?.id;
@@ -96,7 +95,6 @@ const deleteArticleCommentById = async (req, res) => {
   const articleId = req.params.articleId;
 
   try {
-    
     // Check if the article exists
     const articleQuery = `
       SELECT *
@@ -110,7 +108,6 @@ const deleteArticleCommentById = async (req, res) => {
         .status(STATUSCODE.NOT_FOUND)
         .json(errorResponse(STATUS.Error, "Article not found"));
     }
-
     // Check if the user is an admin
     if (userRole === "admin") {
       const deleteQuery = `
@@ -195,5 +192,88 @@ const deleteArticleCommentById = async (req, res) => {
   }
 };
 
+// employees can update their comments
+const updateArticleCommentById = async (req, res) => {
+  const userId = req.user?.id;
+  const commentId = req.params.commentId;
+  const articleId = req.params.articleId;
+  const { comment } = req.body;
 
-module.exports = { createArticleComment, deleteArticleCommentById };
+  try {
+    // Check if the article exists
+    const articleQuery = `
+     SELECT *
+     FROM articles
+     WHERE id = $1;
+   `;
+    const articleResult = await db.query(articleQuery, [articleId]);
+
+    if (!articleResult.rows.length) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Article not found"));
+    }
+
+    const commentQuery = `
+      SELECT user_id, comment
+      FROM article_comments
+      WHERE id = $1;
+    `;
+    const commentResult = await db.query(commentQuery, [commentId]);
+
+    if (!commentResult.rows.length) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Comment not found"));
+    }
+
+    const commentData = commentResult.rows[0];
+
+    if (commentData.user_id !== userId) {
+      return res
+        .status(STATUSCODE.FORBIDDEN)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Access denied: You are not authorized to update this comment"
+          )
+        );
+    }
+
+    const updateQuery = `
+      UPDATE article_comments
+      SET comment = $1, updated_on = $2
+      WHERE id = $3
+      RETURNING *;
+    `;
+    const updatedOn = new Date();
+    // values to update the query with
+    const updateValues = [comment, updatedOn, commentId];
+    const updateResult = await db.query(updateQuery, updateValues);
+    const updatedValues = updateResult.rows[0];
+    const responseData = {
+      message: "Comment successfully updated",
+      id: commentId,
+      createdOn: updatedValues.created_on,
+      comment: updatedValues.comment,
+      updated_on: updatedValues.updated_on,
+    };
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while updating comment")
+      );
+  }
+};
+
+module.exports = {
+  createArticleComment,
+  deleteArticleCommentById,
+  updateArticleCommentById,
+};
