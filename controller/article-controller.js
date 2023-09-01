@@ -137,6 +137,15 @@ const deleteArticleById = async (req, res) => {
           );
       }
     }
+
+    // Delete the comments associated with the article
+    const deleteCommentsQuery = `
+      DELETE FROM article_comments
+      WHERE article_id = $1;
+    `;
+    await db.query(deleteCommentsQuery, [articleId]);
+
+    // delete the article itself
     const deleteQuery = `
         DELETE FROM articles
         WHERE id = $1;
@@ -324,42 +333,44 @@ const getAllArticles = async (req, res) => {
     const result = await db.query(selectQuery);
 
     const articles = result.rows;
-    const responseData = await Promise.all(articles.map(async (article) => {
-      // Extract the article id
-      let articleId = article.id;
-      // Fetch comments for the articles
-      const commentsQuery = `
+    const responseData = await Promise.all(
+      articles.map(async (article) => {
+        // Extract the article id
+        let articleId = article.id;
+        // Fetch comments for the articles
+        const commentsQuery = `
     SELECT *
     FROM article_comments
     WHERE article_id = $1
     ORDER BY created_on DESC;
   `;
-      const commentsResult = await db.query(commentsQuery, [articleId]);
-      const commentRows = commentsResult.rows;
+        const commentsResult = await db.query(commentsQuery, [articleId]);
+        const commentRows = commentsResult.rows;
 
-      // Extract the comments for each article
-      const comments = commentRows.map((data) => {
-        return {
-          id: data.id,
-          comment: data.comment,
-          authorId: data.user_id,
-          authorName: data.user_name,
-          createdOn: data.created_on,
+        // Extract the comments for each article
+        const comments = commentRows.map((data) => {
+          return {
+            id: data.id,
+            comment: data.comment,
+            authorId: data.user_id,
+            authorName: data.user_name,
+            createdOn: data.created_on,
+          };
+        });
+
+        const data = {
+          id: article.id,
+          title: article.title,
+          article: article.article,
+          category: article.category,
+          userId: article.user_id,
+          createdOn: article.created_on,
+          comments: comments,
         };
-      });
 
-      const data = {
-        id: article.id,
-        title: article.title,
-        article: article.article,
-        category: article.category,
-        userId: article.user_id,
-        createdOn: article.created_on,
-        comments: comments,
-      };
-
-      return data;
-    }));
+        return data;
+      })
+    );
 
     res
       .status(STATUSCODE.OK)
