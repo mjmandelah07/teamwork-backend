@@ -113,12 +113,14 @@ const updateArticlebyId = async (req, res) => {
   }
 };
 
+// delete articles from the database using the specified parameters
 const deleteArticleById = async (req, res) => {
   const userId = req.user?.id;
   const userRole = req.user?.role;
   const articleId = req.params.articleId;
 
   try {
+    // if user is not admin, check if the user is the article owner
     if (userRole !== "admin") {
       const authorQuery = "SELECT user_id FROM articles WHERE id = $1";
       const authorResult = await db.query(authorQuery, [articleId]);
@@ -138,11 +140,12 @@ const deleteArticleById = async (req, res) => {
       }
     }
 
-    // Delete the comments associated with the article
+    // Query the article comments and delete the comments associated with the article
     const deleteCommentsQuery = `
-      DELETE FROM article_comments
-      WHERE article_id = $1;
-    `;
+    DELETE FROM article_comments
+    WHERE article_id = $1;
+  `;
+
     await db.query(deleteCommentsQuery, [articleId]);
 
     // delete the article itself
