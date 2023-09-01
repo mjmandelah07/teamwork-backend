@@ -12,7 +12,8 @@ const articleCommentTable = async () => {
     article_id INT,
     user_name TEXT,
     comment TEXT,
-    created_on TIMESTAMP DEFAULT NOW()
+    created_on TIMESTAMP DEFAULT NOW(),
+    updated_on TIMESTAMP
   );
 `;
   // Insert dummy data

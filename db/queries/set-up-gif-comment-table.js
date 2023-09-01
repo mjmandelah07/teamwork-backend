@@ -11,7 +11,8 @@ const gifCommentTable = async () => {
     gif_id INT,
     comment TEXT,
     user_name TEXT,
-    created_on TIMESTAMP DEFAULT NOW()
+    created_on TIMESTAMP DEFAULT NOW(),
+    updated_on TIMESTAMP
   );
 `;
   // Insert dummy data
