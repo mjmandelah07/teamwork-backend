@@ -11,6 +11,7 @@ const {
 } = require("../controller/article-controller");
 const {
   createArticleComment,
+  deleteArticleCommentById,
 } = require("../controller/article-comment-controller");
 const authMiddleWare = require("../auth/auth-middle-ware");
 
@@ -38,6 +39,14 @@ router.post(
   authMiddleware,
   createArticleComment
 );
+
+// employees and admin can delete article comments
+router.delete(
+  "/articles/:articleId/comments/:commentId",
+  authMiddleware,
+  deleteArticleCommentById
+);
+
 
 module.exports = router;
 
