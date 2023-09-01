@@ -135,11 +135,12 @@ const deleteGifById = async (req, res) => {
         );
     }
 
-    // Delete the comments associated with the gif
+    // Query and delete the comments associated with the gif
     const deleteCommentsQuery = `
         DELETE FROM gif_comments
         WHERE gif_id = $1;
         `;
+
     await db.query(deleteCommentsQuery, [gifId]);
 
     // delete the gif from the server
