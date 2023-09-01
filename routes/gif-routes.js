@@ -5,7 +5,7 @@ const {
   getAllGifs,
   deleteGifById,
 } = require("../controller/gif-controller");
-const { createGifComment } = require("../controller/gif-comment-controller");
+const { createGifComment, deleteGifCommentById } = require("../controller/gif-comment-controller");
 
 const authMiddleware = require("../auth/auth-middle-ware");
 
@@ -20,6 +20,13 @@ router.delete("/gifs/:gifId", authMiddleware, deleteGifById);
 
 // employees can comment on gifs
 router.post("/gifs/:gifId/comments", authMiddleware, createGifComment);
+
+// employees and admin can delete comment on gifs
+router.delete(
+  "/gifs/:gifId/comments/:commentId",
+  authMiddleware,
+  deleteGifCommentById
+);
 
 module.exports = router;
 
