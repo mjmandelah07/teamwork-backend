@@ -25,7 +25,7 @@ router.patch("/articles/:articleId", authMiddleware, updateArticlebyId);
 router.delete("/articles/:articleId", authMiddleware, deleteArticleById);
 
 // GET /articles BY ID
-router.get("/articles/:articleId", authMiddleWare, getArticleById);
+router.get("/articles/:articleId", authMiddleware, getArticleById);
 
 // get all articles by a certain user
 router.get("/articles/user/:userId", authMiddleware, getAllArticlesByUserId);
