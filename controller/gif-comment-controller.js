@@ -29,23 +29,22 @@ const createGifComment = async (req, res) => {
         .json(errorResponse(STATUS.Error, "Gif not found"));
     }
 
-     // Fetch the commentor name
-     const userQuery = `
+    // Fetch the commentor name
+    const userQuery = `
      SELECT *
      FROM users 
      WHERE id = $1;
 `;
-const userResult = await db.query(userQuery, [userId]);
+    const userResult = await db.query(userQuery, [userId]);
 
-if (!userResult.rows.length) {
- return res
-   .status(STATUSCODE.NOT_FOUND)
-   .json(errorResponse(STATUS.Error, "User not found"));
-}
+    if (!userResult.rows.length) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "User not found"));
+    }
 
-// User variables
-const authorName = `${userResult.rows[0].firstname}  ${userResult.rows[0].lastname}`;
-
+    // User variables
+    const authorName = `${userResult.rows[0].firstname}  ${userResult.rows[0].lastname}`;
 
     const gifTitle = gifResult.rows[0].title;
 
@@ -190,4 +189,87 @@ const deleteGifCommentById = async (req, res) => {
   }
 };
 
-module.exports = { createGifComment, deleteGifCommentById };
+// employees can update their comments
+const updateGifCommentById = async (req, res) => {
+  const userId = req.user?.id;
+  const commentId = req.params.commentId;
+  const gifId = req.params.gifId;
+  const { comment } = req.body;
+
+  try {
+    // Check if the article exists
+    const gifQuery = `
+      SELECT *
+      FROM gifs
+      WHERE id = $1;
+    `;
+    const gifResult = await db.query(gifQuery, [gifId]);
+
+    if (!gifResult.rows.length) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Gif not found"));
+    }
+    const commentQuery = `
+      SELECT user_id, comment
+      FROM gif_comments
+      WHERE id = $1;
+    `;
+    const commentResult = await db.query(commentQuery, [commentId]);
+
+    if (!commentResult.rows.length) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Comment not found"));
+    }
+
+    const commentData = commentResult.rows[0];
+
+    if (commentData.user_id !== userId) {
+      return res
+        .status(STATUSCODE.FORBIDDEN)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Access denied: You are not authorized to update this comment"
+          )
+        );
+    }
+
+    const updateQuery = `
+      UPDATE gif_comments
+      SET comment = $1, updated_on = $2
+      WHERE id = $3
+      RETURNING *;
+    `;
+    const updatedOn = new Date();
+    // values to update the query with
+    const updateValues = [comment, updatedOn, commentId];
+    const updateResult = await db.query(updateQuery, updateValues);
+    const updatedValues = updateResult.rows[0];
+    const responseData = {
+      message: "Comment successfully updated",
+      id: commentId,
+      createdOn: updatedValues.created_on,
+      comment: updatedValues.comment,
+      updated_on: updatedValues.updated_on,
+    };
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(STATUS.Error, "An error occurred while updating comment")
+      );
+  }
+};
+
+module.exports = {
+  createGifComment,
+  deleteGifCommentById,
+  updateGifCommentById,
+};
