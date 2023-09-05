@@ -1,14 +1,11 @@
 const db = require("../db/db");
 const cloudinary = require("../cloudinary-config");
-const { createGifTable } = require("../db/queries/set-up-gif-table");
 const {
   STATUSCODE,
   STATUS,
   successResponse,
   errorResponse,
 } = require("../utilities/response-utility");
-
-createGifTable();
 
 const createGif = async (req, res) => {
   // get the token details from the authmiddleware

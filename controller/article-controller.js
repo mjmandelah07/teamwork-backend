@@ -1,14 +1,10 @@
 const db = require("../db/db");
-const { createArticles } = require("../db/queries/set-up-article-table");
 const {
   STATUSCODE,
   STATUS,
   successResponse,
   errorResponse,
 } = require("../utilities/response-utility");
-
-// create article table for testing purposes
-createArticles();
 
 // Function to create and store articles
 const createArticle = async (req, res) => {

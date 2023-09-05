@@ -40,7 +40,7 @@ const createArticles = async () => {
   ];
 
   try {
-    // Drop the table if it exists
+    // Drop the articles table if it exists
     await db.query(dropArticleTableQuery);
 
     // Create the article table
