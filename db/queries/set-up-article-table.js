@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const createArticles = async () => {
   // Drop the articles table if it exists
-  const dropArticleTableQuery = "DROP TABLE IF EXISTS articles";
+  const dropArticleTableQuery = "DROP TABLE IF EXISTS articles CASCADE";
 
   // Create the articles table
   const createArticleTableQuery = `
@@ -29,10 +29,15 @@ const createArticles = async () => {
     title: "Love is great",
     article:
       "Just one small positive thought in the morning can change your whole day. Just one small positive thought in the morning can change your whole day.",
-      category: 'Love',
+    category: "Love",
   };
 
-  const insertArticleValues = [articleData.title, articleData.article, articleData.category, 1];
+  const insertArticleValues = [
+    articleData.title,
+    articleData.article,
+    articleData.category,
+    1,
+  ];
 
   try {
     // Drop the table if it exists

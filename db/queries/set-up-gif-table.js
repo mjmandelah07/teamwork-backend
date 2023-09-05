@@ -1,7 +1,7 @@
 const db = require("../db");
 
 const createGifTable = async () => {
-  const dropTableQuery = `DROP TABLE IF EXISTS gifs;`;
+  const dropTableQuery = `DROP TABLE IF EXISTS gifs CASCADE;`;
 
   // Create the gif table if it doesn't exist
   const createTableQuery = `
@@ -24,7 +24,7 @@ const createGifTable = async () => {
   const values = [
     "https://i0.wp.com/www.galvanizeaction.org/wp-content/uploads/2022/06/muppets-we-belong.gif?resize=245%2C205&ssl=1",
     "belonging",
-    'lOVE',
+    "lOVE",
     1,
   ];
   try {
