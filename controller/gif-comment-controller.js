@@ -1,13 +1,10 @@
 const db = require("../db/db");
-const { gifCommentTable } = require("../db/queries/set-up-gif-comment-table");
 const {
   STATUSCODE,
   STATUS,
   successResponse,
   errorResponse,
 } = require("../utilities/response-utility");
-
-gifCommentTable();
 
 const createGifComment = async (req, res) => {
   const { comment } = req.body;

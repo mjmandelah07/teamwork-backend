@@ -1,15 +1,11 @@
 const db = require("../db/db");
-const {
-  articleCommentTable,
-} = require("../db/queries/set-up-article-comment-table");
+
 const {
   STATUSCODE,
   STATUS,
   successResponse,
   errorResponse,
 } = require("../utilities/response-utility");
-
-articleCommentTable();
 
 // function to create comments for an article
 const createArticleComment = async (req, res) => {
