@@ -1,7 +1,7 @@
 const db = require("../db");
 
 const createGifTable = async () => {
-  const dropTableQuery = `DROP TABLE IF EXISTS gifs CASCADE;`;
+  const dropTableQuery = `DROP TABLE IF EXISTS gifs;`;
 
   // Create the gif table if it doesn't exist
   const createTableQuery = `

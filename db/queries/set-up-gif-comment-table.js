@@ -8,7 +8,7 @@ const gifCommentTable = async () => {
   CREATE TABLE IF NOT EXISTS gif_comments (
     id SERIAL PRIMARY KEY,
     user_id INT,
-    gif_id INT REFERENCES gifs(id) ON DELETE CASCADE,
+    gif_id INT,
     comment TEXT,
     user_name TEXT,
     created_on TIMESTAMP DEFAULT NOW()

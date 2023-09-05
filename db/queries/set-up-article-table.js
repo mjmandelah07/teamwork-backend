@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const createArticles = async () => {
   // Drop the articles table if it exists
-  const dropArticleTableQuery = "DROP TABLE IF EXISTS articles CASCADE";
+  const dropArticleTableQuery = "DROP TABLE IF EXISTS articles";
 
   // Create the articles table
   const createArticleTableQuery = `

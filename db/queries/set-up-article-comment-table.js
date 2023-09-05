@@ -9,7 +9,7 @@ const articleCommentTable = async () => {
   CREATE TABLE IF NOT EXISTS article_comments (
     id SERIAL PRIMARY KEY,
     user_id INT,
-    article_id INT REFERENCES articles(id) ON DELETE CASCADE,
+    article_id INT,
     user_name TEXT,
     comment TEXT,
     created_on TIMESTAMP DEFAULT NOW()
