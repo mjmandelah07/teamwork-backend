@@ -113,14 +113,14 @@ const updateArticlebyId = async (req, res) => {
   }
 };
 
-// delete articles from the database using the specified parameters
+// admin can delete articles and employees can delete article that belongs to them
 const deleteArticleById = async (req, res) => {
   const userId = req.user?.id;
   const userRole = req.user?.role;
   const articleId = req.params.articleId;
 
   try {
-    // if user is not admin, check if the user is the article owner
+    // If the user is not an admin, check if the user is the article owner
     if (userRole !== "admin") {
       const authorQuery = "SELECT user_id FROM articles WHERE id = $1";
       const authorResult = await db.query(authorQuery, [articleId]);
@@ -129,57 +129,42 @@ const deleteArticleById = async (req, res) => {
         authorResult.rows.length === 0 ||
         authorResult.rows[0].user_id !== userId
       ) {
-        return res
-          .status(STATUSCODE.FORBIDDEN)
-          .json(
-            errorResponse(
-              STATUS.Error,
-              "Access denied: You are not authorized to delete this article"
-            )
-          );
+        return res.status(STATUSCODE.FORBIDDEN).json({
+          status: STATUS.Error,
+          error: "Access denied: You are not authorized to delete this article",
+        });
       }
     }
 
-    // Query the article comments and delete the comments associated with the article
-    const deleteCommentsQuery = `
-    DELETE FROM article_comments
-    WHERE article_id = $1;
-  `;
-
-    await db.query(deleteCommentsQuery, [articleId]);
-
-    // delete the article itself
+    // Delete the article itself
     const deleteQuery = `
-        DELETE FROM articles
-        WHERE id = $1;
-      `;
+      DELETE FROM articles
+      WHERE id = $1;
+    `;
     const deleteValues = [articleId];
     const deleteResult = await db.query(deleteQuery, deleteValues);
 
     if (deleteResult.rowCount === 0) {
-      return res
-        .status(STATUSCODE.NOT_FOUND)
-        .json(
-          errorResponse(
-            STATUS.Error,
-            "Article not found or not authorized to delete"
-          )
-        );
+      return res.status(STATUSCODE.NOT_FOUND).json({
+        status: STATUS.Error,
+        error: "Article not found or not authorized to delete",
+      });
     }
 
-    res
-      .status(STATUSCODE.OK)
-      .json(successResponse(STATUS.Success, "Article successfully deleted"));
+    res.status(STATUSCODE.OK).json({
+      status: STATUS.Success,
+      message: "Article successfully deleted",
+    });
   } catch (error) {
     console.error("Error deleting article:", error);
-    res
-      .status(500)
-      .json(
-        errorResponse(STATUS.Error, "An error occurred while deleting article")
-      );
+    res.status(STATUSCODE.SERVER).json({
+      status: STATUS.Error,
+      error: "An error occurred while deleting article",
+    });
   }
 };
 
+// get article by the article ID
 const getArticleById = async (req, res) => {
   const articleId = req.params.articleId;
 
@@ -245,6 +230,7 @@ const getArticleById = async (req, res) => {
   }
 };
 
+// GET Article using the user id to fetch all articles posted by the user
 const getAllArticlesByUserId = async (req, res) => {
   const userId = req.params.userId;
 
@@ -326,6 +312,7 @@ const getAllArticlesByUserId = async (req, res) => {
   }
 };
 
+// GET all articles
 const getAllArticles = async (req, res) => {
   try {
     const selectQuery = `

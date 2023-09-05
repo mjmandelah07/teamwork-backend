@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../auth/auth-middle-ware");
 const {
   createGif,
   getAllGifs,
@@ -11,8 +12,6 @@ const {
   deleteGifCommentById,
   updateGifCommentById,
 } = require("../controller/gif-comment-controller");
-
-const authMiddleware = require("../auth/auth-middle-ware");
 
 // Route to upload GIF and store URL in database
 router.post("/gifs", authMiddleware, createGif);
