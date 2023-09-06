@@ -163,14 +163,21 @@ const deleteArticleById = async (req, res) => {
 // get article by the article ID
 const getArticleById = async (req, res) => {
   const articleId = req.params.articleId;
+  const { page } = req.query;
+  const itemsPerPage = 10; // Number of comments per page
+
+  // Calculate offset based on the page query parameter
+  const validatePage = page && /^\d+$/.test(page) ? parseInt(page) : 1;
+  const offset = page ? (validatePage - 1) * itemsPerPage : 0;
 
   try {
-    // Fetch the articles from the database
+    // Fetch article details
     const selectQuery = `
-        SELECT *
-        FROM articles
-        WHERE id = $1;
-      `;
+      SELECT *, (
+        SELECT COUNT(*) FROM article_comments WHERE article_id = $1
+      ) as comment_count
+      FROM articles WHERE id = $1;
+    `;
     const selectValues = [articleId];
     const result = await db.query(selectQuery, selectValues);
 
@@ -180,16 +187,29 @@ const getArticleById = async (req, res) => {
         .json(errorResponse(STATUS.Error, "Article not found"));
     }
 
+    // returned article from the database
     const article = result.rows[0];
 
-    // Fetch comments for the article
-    const commentsQuery = `
-      SELECT *
-      FROM article_comments
-      WHERE article_id = $1
-      ORDER BY created_on DESC;
+    // Fetch comments for the article with pagination
+    let commentsQuery = `
+      SELECT * FROM article_comments WHERE article_id = $1
+      ORDER BY created_on DESC
     `;
-    const commentsResult = await db.query(commentsQuery, [articleId]);
+
+    // valuues for query
+    const commentValues = [articleId];
+
+    // Append LIMIT to the query only when page is specified
+    if (page) {
+      commentsQuery += `
+      LIMIT $${commentValues.length + 1} OFFSET $${commentValues.length + 2};
+    `;
+
+      // Add itemsPerPage and offset to the queryParams array
+      commentValues.push(itemsPerPage, offset);
+    }
+
+    const commentsResult = await db.query(commentsQuery, commentValues);
     const commentRows = commentsResult.rows;
     const comments = commentRows.map((data) => {
       return {
@@ -201,12 +221,17 @@ const getArticleById = async (req, res) => {
       };
     });
 
+    // Determine if there are more comments to load
+    const hasMore = comments.length === itemsPerPage;
+
     const responseData = {
       id: article.id,
       title: article.title,
       article: article.article,
       category: article.category,
       createdOn: article.created_on,
+      commentCount: article.comment_count, // Count of comments
+      hasMore: hasMore,
       comments: comments,
     };
 
@@ -230,6 +255,16 @@ const getArticleById = async (req, res) => {
 const getAllArticlesByUserId = async (req, res) => {
   const userId = req.params.userId;
 
+  // get  page query parameters
+  const { page } = req.query;
+
+  // Number of articles per page
+  const itemsPerPage = 10;
+
+  // Calculate offset based on the page query parameter
+  const validatePage = page && /^\d+$/.test(page) ? parseInt(page) : 1;
+  const offset = page ? (validatePage - 1) * itemsPerPage : 0;
+
   // check if user exists first before getting articles
   const userQuery =
     "SELECT EXISTS (SELECT 1 FROM users WHERE id = $1) AS id_exists;";
@@ -244,18 +279,49 @@ const getAllArticlesByUserId = async (req, res) => {
   }
 
   try {
-    const selectQuery = `
-        SELECT *
-        FROM articles
-        WHERE user_id = $1 
-        ORDER BY created_on DESC;
-      `;
+    // query the database to get the articles for specified user and count the comments associated with the articles
+    let selectQuery = `
+  SELECT articles.*, COALESCE(comment_counts.comment_count, 0) AS comment_count
+  FROM articles
+  LEFT JOIN (
+    SELECT article_id, COUNT(*) AS comment_count
+    FROM article_comments
+    GROUP BY article_id
+  ) AS comment_counts
+  ON articles.id = comment_counts.article_id
+  WHERE user_id = $1
+  ORDER BY created_on DESC
+`;
+
+    // valuues for query
     const selectValues = [userId];
+
+    // Append LIMIT to the query only when page is specified
+    if (page) {
+      selectQuery += `
+      LIMIT $${selectValues.length + 1} OFFSET $${selectValues.length + 2};
+    `;
+
+      // Add itemsPerPage and offset to the queryParams array
+      selectValues.push(itemsPerPage, offset);
+    }
+
     const result = await db.query(selectQuery, selectValues);
-    // all articles
+    // all articles posted by the user
     const articles = result.rows;
 
-    const responseData = await Promise.all(
+    // Fetch the total count of articles posted by the user for calculating totalPages
+    const totalCountQuery = `
+      SELECT COUNT(*) as total_count
+      FROM articles
+      WHERE user_id = $1;
+    `;
+    const totalCountValues = [userId];
+    const totalCountResult = await db.query(totalCountQuery, totalCountValues);
+    const totalArticleCount = totalCountResult.rows[0].total_count;
+
+    // return all the articles and their comments
+    const articlesData = await Promise.all(
       articles.map(async (article) => {
         // Extract the article id
         let articleId = article.id;
@@ -264,7 +330,8 @@ const getAllArticlesByUserId = async (req, res) => {
     SELECT *
     FROM article_comments
     WHERE article_id = $1
-    ORDER BY created_on DESC;
+    ORDER BY created_on DESC
+   ;
   `;
         const commentsResult = await db.query(commentsQuery, [articleId]);
         const commentRows = commentsResult.rows;
@@ -286,12 +353,24 @@ const getAllArticlesByUserId = async (req, res) => {
           article: article.article,
           category: article.category,
           createdOn: article.created_on,
+          commentCounts: article.comment_count,
           comments: comments,
         };
 
         return data;
       })
     );
+
+    // Calculate totalPages based on totalArticleCount and itemsPerPage
+    const totalPages = Math.ceil(totalArticleCount / itemsPerPage);
+
+    // All responses for the client
+    const responseData = {
+      articles: articlesData,
+      currentPage: page,
+      totalPages: totalPages,
+    };
+
     res
       .status(STATUSCODE.OK)
       .json(successResponse(STATUS.Success, responseData));
@@ -308,18 +387,72 @@ const getAllArticlesByUserId = async (req, res) => {
   }
 };
 
-// GET all articles
+// GET articles by category or all articles with pagination
 const getAllArticles = async (req, res) => {
   try {
-    const selectQuery = `
-        SELECT *
-        FROM articles 
-        ORDER BY created_on DESC;
-      `;
-    const result = await db.query(selectQuery);
+    // get category and page query parameters
+    const { category, page } = req.query;
 
-    const articles = result.rows;
-    const responseData = await Promise.all(
+    // Number of articles per page
+    const itemsPerPage = 10;
+
+    // Calculate offset based on the page query parameter
+    const validatePage = page && /^\d+$/.test(page) ? parseInt(page) : 1;
+    const offset = page ? (validatePage - 1) * itemsPerPage : 0;
+
+    // Query to get articles and count the comments associated with the article
+    let selectQuery = `
+        SELECT articles.*, COUNT(article_comments.id) AS comment_count
+        FROM articles 
+        LEFT JOIN article_comments ON articles.id = article_comments.article_id
+      `;
+
+    // Initialize an array to hold query parameters
+    const queryParams = [];
+
+    // If category query is added to the endpoint, append it to the selectQuery and add it to the queryParams array
+    if (category) {
+      selectQuery += `WHERE category = $1 `;
+      queryParams.push(category);
+    }
+    // Add ORDER BY to sort by created_on
+    selectQuery += `
+    GROUP BY articles.id
+    ORDER BY articles.created_on DESC
+    `;
+
+    // Append LIMIT to the query only when page is specified
+    if (page) {
+      selectQuery += `
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2};
+    `;
+
+      // Add itemsPerPage and offset to the queryParams array
+      queryParams.push(itemsPerPage, offset);
+    }
+
+    const result = await db.query(selectQuery, queryParams);
+
+    const articles = result.rows; // the articles returned from the query
+
+    // query the articles to get the total number of articles returned
+    let totalCountQuery = `
+  SELECT COUNT(*) as total_count
+  FROM articles
+`;
+    let countParams = [];
+
+    if (category) {
+      totalCountQuery += `
+    WHERE category = $1
+  `;
+      queryParams.push(category);
+    }
+    const totalCountResult = await db.query(totalCountQuery, countParams);
+    const totalCount = totalCountResult.rows[0].total_count;
+
+    // return the articles and their comments
+    const articlesData = await Promise.all(
       articles.map(async (article) => {
         // Extract the article id
         let articleId = article.id;
@@ -351,12 +484,23 @@ const getAllArticles = async (req, res) => {
           category: article.category,
           userId: article.user_id,
           createdOn: article.created_on,
+          commentCounts: article.comment_count,
           comments: comments,
         };
 
         return data;
       })
     );
+
+    // Calculate the total number of pages based on the total count and itemsPerPage
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+    // All responses for the client
+    const responseData = {
+      articles: articlesData,
+      currentPage: page,
+      totalPages: totalPages,
+    };
 
     res
       .status(STATUSCODE.OK)
