@@ -56,15 +56,75 @@ const createGif = async (req, res) => {
 // get all the gifs
 const getAllGifs = async (req, res) => {
   try {
-    const selectQuery = "SELECT * FROM gifs ORDER BY created_on DESC";
-    const result = await db.query(selectQuery);
+    // get category and page query parameters
+    const { category, page } = req.query;
+
+    // Number of gifs per page
+    const itemsPerPage = 10;
+
+    // Calculate offset based on the page query parameter
+    const validatePage = page && /^\d+$/.test(page) ? parseInt(page) : 1;
+    const offset = page ? (validatePage - 1) * itemsPerPage : 0;
+
+    // query to get all columns in the gif table
+    let selectQuery = `
+        SELECT gifs.*, COUNT(gif_comments.id) AS comment_count
+        FROM gifs 
+        LEFT JOIN gif_comments ON gifs.id = gif_comments.gif.id
+      `;
+    // Initialize an array to hold query parameters
+    const queryParams = [];
+
+    // if category query is added to the endpoint, append it to the selectQuery otherwise skip it
+    if (category) {
+      selectQuery += `WHERE category = $1 `;
+      queryParams.push(category);
+    }
+
+    // Add ORDER BY to sort by created_on
+    selectQuery += `
+    GROUP BY gifs.id
+    ORDER BY gifs.created_on DESC
+    `;
+
+    // Append LIMIT to the query only when page is specified
+    if (page) {
+      selectQuery += `
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2};
+    `;
+
+      // Add itemsPerPage and offset to the queryParams array
+      queryParams.push(itemsPerPage, offset);
+    }
+
+    const gifsResult = await db.query(selectQuery, queryParams);
+
+    // query the gifs to get the total number of gifs returned
+    let totalCountQuery = `
+  SELECT COUNT(*) as total_count
+  FROM gifs
+`;
+    let countParams = [];
+
+    if (category) {
+      totalCountQuery += `
+    WHERE category = $1
+  `;
+      queryParams.push(category);
+    }
+    const totalCountResult = await db.query(totalCountQuery, countParams);
+    const totalCount = totalCountResult.rows[0].total_count;
+
     const gifsData = await Promise.all(
-      result.rows.map(async (row) => {
+      gifsResult.rows.map(async (row) => {
+        // Fetch comments for the articles
         const commentsQuery = `
         SELECT *
         FROM gif_comments
-        WHERE gif_id = $1;
+        WHERE gif_id = $1
+        ORDER BY created_on DESC;
       `;
+
         const commentsResult = await db.query(commentsQuery, [row.id]);
         const comments = commentsResult.rows.map((commentRow) => ({
           id: commentRow.id,
@@ -79,6 +139,7 @@ const getAllGifs = async (req, res) => {
           category: row.category,
           userId: row.user_id,
           createdOn: row.created_on,
+          commentCounts: row.comment_count,
           comments: comments,
         };
 
@@ -86,7 +147,18 @@ const getAllGifs = async (req, res) => {
       })
     );
 
-    res.status(STATUSCODE.OK).json(successResponse(STATUS.Success, gifsData));
+    // Calculate the total number of pages based on the total count and itemsPerPage
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+    const responseData = {
+      gifs: gifsData,
+      currentPage: page,
+      totalPages: totalPages,
+    };
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, responseData));
   } catch (error) {
     console.error(error);
     res
