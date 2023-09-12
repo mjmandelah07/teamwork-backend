@@ -217,6 +217,8 @@ const getArticleById = async (req, res) => {
         comment: data.comment,
         authorId: data.user_id,
         authorName: data.user_name,
+        flagged: data.flagged,
+        flaggedReason: data.flag_reason,
         createdOn: data.created_on,
       };
     });
@@ -229,6 +231,8 @@ const getArticleById = async (req, res) => {
       title: article.title,
       article: article.article,
       category: article.category,
+      flagged: article.flagged,
+      flaggedReason: article.flag_reason,
       createdOn: article.created_on,
       commentCount: article.comment_count, // Count of comments
       hasMore: hasMore,
@@ -279,7 +283,7 @@ const getAllArticlesByUserId = async (req, res) => {
   }
 
   try {
-    // query the database to get the articles for specified user and count the comments associated with the articles
+    // query the database to get the articles, comments for specified user and count the comments associated with the articles
     let selectQuery = `
   SELECT articles.*, COALESCE(comment_counts.comment_count, 0) AS comment_count
   FROM articles
@@ -343,6 +347,8 @@ const getAllArticlesByUserId = async (req, res) => {
             comment: data.comment,
             authorId: data.user_id,
             authorName: data.user_name,
+            flagged: data.flagged,
+            flaggedReason: data.flag_reason,
             createdOn: data.created_on,
           };
         });
@@ -352,6 +358,8 @@ const getAllArticlesByUserId = async (req, res) => {
           title: article.title,
           article: article.article,
           category: article.category,
+          flagged: article.flagged,
+          flaggedReason: article.flag_reason,
           createdOn: article.created_on,
           commentCounts: article.comment_count,
           comments: comments,
@@ -361,7 +369,7 @@ const getAllArticlesByUserId = async (req, res) => {
       })
     );
 
-    // Calculate totalPages based on totalArticleCount and itemsPerPage
+    // Calculate totalPages based on totalArticleCount and itemsPerPage for paginations
     const totalPages = Math.ceil(totalArticleCount / itemsPerPage);
 
     // All responses for the client
@@ -473,6 +481,8 @@ const getAllArticles = async (req, res) => {
             comment: data.comment,
             authorId: data.user_id,
             authorName: data.user_name,
+            flagged: data.flagged,
+            flaggedReason: data.flag_reason,
             createdOn: data.created_on,
           };
         });
@@ -483,6 +493,8 @@ const getAllArticles = async (req, res) => {
           article: article.article,
           category: article.category,
           userId: article.user_id,
+          flagged: article.flagged,
+          flaggedReason: article.flag_reason,
           createdOn: article.created_on,
           commentCounts: article.comment_count,
           comments: comments,

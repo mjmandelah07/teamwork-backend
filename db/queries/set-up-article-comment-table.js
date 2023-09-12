@@ -12,6 +12,8 @@ const articleCommentTable = async () => {
     article_id INT REFERENCES articles(id) ON DELETE CASCADE,
     user_name TEXT,
     comment TEXT,
+    flagged BOOLEAN DEFAULT false,
+    flag_reason TEXT,
     created_on TIMESTAMP DEFAULT NOW()
   );
 `;

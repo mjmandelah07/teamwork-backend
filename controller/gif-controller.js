@@ -130,20 +130,24 @@ const getAllGifs = async (req, res) => {
           id: commentRow.id,
           comment: commentRow.comment,
           authorId: commentRow.user_id,
+          flagged: commentRow.flagged,
+          flaggedReason: commentRow.flag_reason,
         }));
-        const commentData = {
+        const gifData = {
           id: row.id,
           imageUrl: row.url,
           title: row.title,
           url: row.url,
           category: row.category,
           userId: row.user_id,
+          flagged: row.flagged,
+          flaggedReason: row.flag_reason,
           createdOn: row.created_on,
           commentCounts: row.comment_count,
           comments: comments,
         };
 
-        return commentData;
+        return gifData;
       })
     );
 

@@ -1,0 +1,284 @@
+const db = require("../db/db");
+const {
+  STATUSCODE,
+  STATUS,
+  successResponse,
+  errorResponse,
+} = require("../utilities/response-utility");
+
+// Function to flag an article by ID
+const flagArticle = async (req, res) => {
+  const { articleId } = req.params;
+  const { flagStatus, flagReason } = req.body;
+
+  // Trim the flagReason property to remove empty spaces or set it to null if flagStatus is false
+  const cleanedFlagReason =
+    flagStatus === false ? null : flagReason ? flagReason.trim() : null;
+
+  // Validate the flag status (e.g., checking if it's a valid boolean value)
+  if (typeof flagStatus !== "boolean") {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Invalid flag status."));
+  }
+  
+  // Validate the flagReason (e.g., checking for length, sanitize, or any other validation)
+  if (
+    (flagStatus === true &&
+      (!cleanedFlagReason ||
+        cleanedFlagReason.length === 0 ||
+        typeof cleanedFlagReason !== "string")) ||
+    (flagStatus === false && cleanedFlagReason !== null)
+  ) {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "Flag reason is required and must be a string."
+        )
+      );
+  }
+
+  try {
+    // Check if the article exists
+    const checkArticleQuery = "SELECT * FROM articles WHERE id = $1";
+    const checkArticleResult = await db.query(checkArticleQuery, [articleId]);
+
+    if (checkArticleResult.rows.length === 0) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Article not found"));
+    }
+
+    // Flag the article if exists
+    const flagArticleQuery =
+      "UPDATE articles SET flagged = $2, flag_reason = $3 WHERE id = $1";
+    await db.query(flagArticleQuery, [
+      articleId,
+      flagStatus,
+      cleanedFlagReason,
+    ]);
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Article flag status updated"));
+  } catch (error) {
+    console.error("Error updating article flag status:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while updating the article flag status"
+        )
+      );
+  }
+};
+
+// Function to flag an gif by ID
+const flagGif = async (req, res) => {
+  const { gifId } = req.params;
+  const { flagStatus, flagReason } = req.body;
+
+  // Trim the flagReason property to remove empty spaces or set it to null if flagStatus is false
+  const cleanedFlagReason =
+    flagStatus === false ? null : flagReason ? flagReason.trim() : null;
+
+  // Validate the flag status (e.g., checking if it's a valid boolean value)
+  if (typeof flagStatus !== "boolean") {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Invalid flag status."));
+  }
+
+  // Validate the flagReason (e.g., checking for length, sanitize, or any other validation)
+  if (
+    (flagStatus === true &&
+      (!cleanedFlagReason ||
+        cleanedFlagReason.length === 0 ||
+        typeof cleanedFlagReason !== "string")) ||
+    (flagStatus === false && cleanedFlagReason !== null)
+  ) {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "Flag reason is required and must be a string."
+        )
+      );
+  }
+
+  try {
+    // Check if the gif exists
+    const checkGifQuery = "SELECT * FROM gifs WHERE id = $1";
+    const checkGifResult = await db.query(checkGifQuery, [gifId]);
+
+    if (checkGifResult.rows.length === 0) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Gif not found"));
+    }
+
+    // Flag the gif if exists
+    const flagGifQuery =
+      "UPDATE gifs SET flagged = $2, flag_reason = $3 WHERE id = $1";
+    await db.query(flagGifQuery, [gifId, flagStatus, cleanedFlagReason]);
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Gif flag status updated"));
+  } catch (error) {
+    console.error("Error updating gif flag status:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while updating the gif flag status"
+        )
+      );
+  }
+};
+
+// Function to flag the gif comment by ID
+const flagGifComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { flagStatus, flagReason } = req.body;
+
+  // Trim the flagReason property to remove empty spaces or set it to null if flagStatus is false
+  const cleanedFlagReason =
+    flagStatus === false ? null : flagReason ? flagReason.trim() : null;
+
+  // Validate the flag status (e.g., checking if it's a valid boolean value)
+  if (typeof flagStatus !== "boolean") {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Invalid flag status."));
+  }
+  // Validate the flagReason (e.g., checking for length, sanitize, or any other validation)
+  if (
+    (flagStatus === true &&
+      (!cleanedFlagReason ||
+        cleanedFlagReason.length === 0 ||
+        typeof cleanedFlagReason !== "string")) ||
+    (flagStatus === false && cleanedFlagReason !== null)
+  ) {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "Flag reason is required and must be a string."
+        )
+      );
+  }
+
+  try {
+    // Check if the comment exists
+    const checkCommentQuery = "SELECT * FROM gif_comments WHERE id = $1";
+    const checkCommentResult = await db.query(checkCommentQuery, [commentId]);
+
+    if (checkCommentResult.rows.length === 0) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Comment not found"));
+    }
+
+    // Flag the comment
+    const flagCommentQuery =
+      "UPDATE gif_comments SET flagged = $2, flag_reason = $3 WHERE id = $1";
+    await db.query(flagCommentQuery, [
+      commentId,
+      flagStatus,
+      cleanedFlagReason,
+    ]);
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Comment flag status updated"));
+  } catch (error) {
+    console.error("Error updating comment flag status:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while updating the comment flag status"
+        )
+      );
+  }
+};
+
+// Function to flag the gif comment by ID
+const flagArticleComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { flagStatus, flagReason } = req.body;
+
+  // Trim the flagReason property to remove empty spaces or set it to null if flagStatus is false
+  const cleanedFlagReason =
+    flagStatus === false ? null : flagReason ? flagReason.trim() : null;
+
+  // Validate the flag status (e.g., checking if it's a valid boolean value)
+  if (typeof flagStatus !== "boolean") {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(errorResponse(STATUS.Error, "Invalid flag status."));
+  }
+
+  // Validate the flagReason (e.g., checking for length, sanitize, or any other validation)
+  if (
+    (flagStatus === true &&
+      (!cleanedFlagReason ||
+        cleanedFlagReason.length === 0 ||
+        typeof cleanedFlagReason !== "string")) ||
+    (flagStatus === false && cleanedFlagReason !== null)
+  ) {
+    return res
+      .status(STATUSCODE.BAD_REQUEST)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "Flag reason is required and must be a string."
+        )
+      );
+  }
+
+  try {
+    // Check if the comment exists
+    const checkCommentQuery = "SELECT * FROM article_comments WHERE id = $1";
+    const checkCommentResult = await db.query(checkCommentQuery, [commentId]);
+
+    if (checkCommentResult.rows.length === 0) {
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(errorResponse(STATUS.Error, "Comment not found"));
+    }
+
+    // Flag the comment
+    const flagCommentQuery =
+      "UPDATE article_comments SET flagged = $2, flag_reason = $3 WHERE id = $1";
+    await db.query(flagCommentQuery, [
+      commentId,
+      flagStatus,
+      cleanedFlagReason,
+    ]);
+
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Comment flag status updated"));
+  } catch (error) {
+    console.error("Error updating comment flag status:", error);
+    res
+      .status(STATUSCODE.SERVER)
+      .json(
+        errorResponse(
+          STATUS.Error,
+          "An error occurred while updating the comment flag status"
+        )
+      );
+  }
+};
+
+module.exports = { flagArticle, flagGif, flagGifComment, flagArticleComment };

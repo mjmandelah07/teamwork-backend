@@ -11,6 +11,8 @@ const gifCommentTable = async () => {
     gif_id INT REFERENCES gifs(id) ON DELETE CASCADE,
     comment TEXT,
     user_name TEXT,
+    flagged BOOLEAN DEFAULT false,
+    flag_reason TEXT,
     created_on TIMESTAMP DEFAULT NOW()
   );
 `;
