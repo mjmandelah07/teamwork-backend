@@ -11,10 +11,6 @@ const flagArticle = async (req, res) => {
   const { articleId } = req.params;
   const { flagStatus, flagReason } = req.body;
 
-  // Trim the flagReason property to remove empty spaces or set it to null if flagStatus is false
-  const cleanedFlagReason =
-    flagStatus === false ? null : flagReason ? flagReason.trim() : null;
-
   // Validate the flag status (e.g., checking if it's a valid boolean value)
   if (typeof flagStatus !== "boolean") {
     return res
@@ -25,10 +21,10 @@ const flagArticle = async (req, res) => {
   // Validate the flagReason (e.g., checking for length, sanitize, or any other validation)
   if (
     (flagStatus === true &&
-      (!cleanedFlagReason ||
-        cleanedFlagReason.length === 0 ||
-        typeof cleanedFlagReason !== "string")) ||
-    (flagStatus === false && cleanedFlagReason !== null)
+      (!flagReason ||
+        flagReason.length === 0 ||
+        typeof flagReason !== "string")) ||
+    (flagStatus === false && flagReason !== null)
   ) {
     return res
       .status(STATUSCODE.BAD_REQUEST)
@@ -57,7 +53,7 @@ const flagArticle = async (req, res) => {
     await db.query(flagArticleQuery, [
       articleId,
       flagStatus,
-      cleanedFlagReason,
+      flagReason
     ]);
 
     res
