@@ -35,14 +35,7 @@ const getAllArticlesGifs = async (req, res) => {
     const combinedItems = combineAndSortItems([...allArticles, ...allGifs]);
 
     // Map the combined items
-    const feedData = combinedItems.map((item) => ({
-      id: item.id,
-      createdOn: item.created_on,
-      title: item.title,
-      "article/url": item.article || item.url,
-      authorId: item.user_id,
-      category: item.category,
-    }));
+    const feedData = combinedItems;
 
     res.status(STATUSCODE.OK).json(successResponse(STATUS.Success, feedData));
   } catch (error) {
