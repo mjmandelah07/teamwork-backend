@@ -125,10 +125,14 @@ const deleteArticleById = async (req, res) => {
         authorResult.rows.length === 0 ||
         authorResult.rows[0].user_id !== userId
       ) {
-        return res.status(STATUSCODE.FORBIDDEN).json({
-          status: STATUS.Error,
-          error: "Access denied: You are not authorized to delete this article",
-        });
+        return res
+          .status(STATUSCODE.FORBIDDEN)
+          .json(
+            errorResponse(
+              STATUS.Error,
+              "Access denied: You are not authorized to delete this article"
+            )
+          );
       }
     }
 
@@ -141,22 +145,24 @@ const deleteArticleById = async (req, res) => {
     const deleteResult = await db.query(deleteQuery, deleteValues);
 
     if (deleteResult.rowCount === 0) {
-      return res.status(STATUSCODE.NOT_FOUND).json({
-        status: STATUS.Error,
-        error: "Article not found or not authorized to delete",
-      });
+      return res
+        .status(STATUSCODE.NOT_FOUND)
+        .json(
+          errorResponse(
+            STATUS.Error,
+            "Article not found or not authorized to delete"
+          )
+        );
     }
 
-    res.status(STATUSCODE.OK).json({
-      status: STATUS.Success,
-      message: "Article successfully deleted",
-    });
+    res
+      .status(STATUSCODE.OK)
+      .json(successResponse(STATUS.Success, "Article successfully deleted"));
   } catch (error) {
     console.error("Error deleting article:", error);
-    res.status(STATUSCODE.SERVER).json({
-      status: STATUS.Error,
-      error: "An error occurred while deleting article",
-    });
+    res
+      .status(STATUSCODE.SERVER)
+      .json(errorResponse.Error, "An error occurred while deleting article");
   }
 };
 
@@ -211,17 +217,7 @@ const getArticleById = async (req, res) => {
 
     const commentsResult = await db.query(commentsQuery, commentValues);
     const commentRows = commentsResult.rows;
-    const comments = commentRows.map((data) => {
-      return {
-        id: data.id,
-        comment: data.comment,
-        authorId: data.user_id,
-        authorName: data.user_name,
-        flagged: data.flagged,
-        flaggedReason: data.flag_reason,
-        createdOn: data.created_on,
-      };
-    });
+    const comments = commentRows;
 
     // Determine if there are more comments to load
     const hasMore = comments.length === itemsPerPage;
@@ -341,17 +337,7 @@ const getAllArticlesByUserId = async (req, res) => {
         const commentRows = commentsResult.rows;
 
         // Extract the comments for each article
-        const comments = commentRows.map((data) => {
-          return {
-            id: data.id,
-            comment: data.comment,
-            authorId: data.user_id,
-            authorName: data.user_name,
-            flagged: data.flagged,
-            flaggedReason: data.flag_reason,
-            createdOn: data.created_on,
-          };
-        });
+        const comments = commentRows;
 
         const data = {
           id: article.id,
@@ -475,17 +461,7 @@ const getAllArticles = async (req, res) => {
         const commentRows = commentsResult.rows;
 
         // Extract the comments for each article
-        const comments = commentRows.map((data) => {
-          return {
-            id: data.id,
-            comment: data.comment,
-            authorId: data.user_id,
-            authorName: data.user_name,
-            flagged: data.flagged,
-            flaggedReason: data.flag_reason,
-            createdOn: data.created_on,
-          };
-        });
+        const comments = commentRows;
 
         const data = {
           id: article.id,

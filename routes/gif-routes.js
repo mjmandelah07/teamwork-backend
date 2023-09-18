@@ -13,8 +13,6 @@ const {
   updateGifCommentById,
 } = require("../controller/gif-comment-controller");
 
-const { flagGif, flagGifComment } = require("../controller/flag-controller");
-
 // Route to upload GIF and store URL in database
 router.post("/gifs", authMiddleware, createGif);
 
@@ -40,11 +38,5 @@ router.patch(
   authMiddleware,
   updateGifCommentById
 );
-
-// Endpoint to flag an gif by ID
-router.patch("/flag-gif/:gifId", authMiddleware, flagGif);
-
-// Endpoint to flag a comment by ID
-router.patch("/flag-gif-comment/:commentId", authMiddleware, flagGifComment);
 
 module.exports = router;

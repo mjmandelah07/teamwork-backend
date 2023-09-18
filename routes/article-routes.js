@@ -15,11 +15,6 @@ const {
   updateArticleCommentById,
 } = require("../controller/article-comment-controller");
 
-const {
-  flagArticle,
-  flagArticleComment,
-} = require("../controller/flag-controller");
-
 // employees create articles
 router.post("/articles", authMiddleware, createArticle);
 
@@ -58,11 +53,5 @@ router.patch(
   authMiddleware,
   updateArticleCommentById
 );
-
-// Endpoint to flag an article by ID
-router.patch("/flag-article/:articleId", authMiddleware, flagArticle);
-
-// Endpoint to flag a comment by ID
-router.patch("/flag-article-comment/:commentId", authMiddleware, flagArticleComment);
 
 module.exports = router;

@@ -49,7 +49,7 @@ const createArticleComment = async (req, res) => {
 
     // Insert the comment into the comments table
     const insertCommentQuery = `
-          INSERT INTO article_comments (user_id, article_id, user_name, comment)
+          INSERT INTO article_comments (user_id, article_id, user_name, article_comment)
           VALUES ($1, $2, $3, $4)
           RETURNING created_on;
         `;
@@ -211,7 +211,7 @@ const updateArticleCommentById = async (req, res) => {
     }
 
     const commentQuery = `
-      SELECT user_id, comment
+      SELECT user_id, article_comment
       FROM article_comments
       WHERE id = $1;
     `;
@@ -238,7 +238,7 @@ const updateArticleCommentById = async (req, res) => {
 
     const updateQuery = `
       UPDATE article_comments
-      SET comment = $1, updated_on = $2
+      SET article_comment = $1, updated_on = $2
       WHERE id = $3
       RETURNING *;
     `;
@@ -251,7 +251,7 @@ const updateArticleCommentById = async (req, res) => {
       message: "Comment successfully updated",
       id: commentId,
       createdOn: updatedValues.created_on,
-      comment: updatedValues.comment,
+      comment: updatedValues.article_comment,
       updated_on: updatedValues.updated_on,
     };
 

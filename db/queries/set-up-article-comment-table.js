@@ -11,7 +11,7 @@ const articleCommentTable = async () => {
     user_id INT,
     article_id INT REFERENCES articles(id) ON DELETE CASCADE,
     user_name TEXT,
-    comment TEXT,
+    article_comment TEXT,
     flagged BOOLEAN DEFAULT false,
     flag_reason TEXT,
     created_on TIMESTAMP DEFAULT NOW()
@@ -19,7 +19,7 @@ const articleCommentTable = async () => {
 `;
   // Insert dummy data
   const insertDummyData = `
-  INSERT INTO article_comments (user_id, article_id, user_name, comment)
+  INSERT INTO article_comments (user_id, article_id, user_name, article_comment)
   VALUES
     ($1, $2, $3, $4); 
 `;
