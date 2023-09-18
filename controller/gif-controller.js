@@ -126,7 +126,11 @@ const getAllGifs = async (req, res) => {
       `;
 
         const commentsResult = await db.query(commentsQuery, [row.id]);
-        const comments = commentsResult.rows;
+        const comments = commentsResult.rows.map((commentRow) => ({
+          id: commentRow.id,
+          gif_comment: commentRow.comment,
+          authorId: commentRow.user_id,
+        }));
         const gifData = {
           id: row.id,
           imageUrl: row.url,

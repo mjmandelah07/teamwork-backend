@@ -217,7 +217,15 @@ const getArticleById = async (req, res) => {
 
     const commentsResult = await db.query(commentsQuery, commentValues);
     const commentRows = commentsResult.rows;
-    const comments = commentRows;
+    const comments = commentRows.map((data) => {
+      return {
+        id: data.id,
+        article_comment: data.comment,
+        authorId: data.user_id,
+        authorName: data.user_name,
+        createdOn: data.created_on,
+      };
+    });
 
     // Determine if there are more comments to load
     const hasMore = comments.length === itemsPerPage;
@@ -337,7 +345,15 @@ const getAllArticlesByUserId = async (req, res) => {
         const commentRows = commentsResult.rows;
 
         // Extract the comments for each article
-        const comments = commentRows;
+        const comments = commentRows.map((data) => {
+          return {
+            id: data.id,
+            article_comment: data.comment,
+            authorId: data.user_id,
+            authorName: data.user_name,
+            createdOn: data.created_on,
+          };
+        });
 
         const data = {
           id: article.id,
@@ -461,7 +477,15 @@ const getAllArticles = async (req, res) => {
         const commentRows = commentsResult.rows;
 
         // Extract the comments for each article
-        const comments = commentRows;
+        const comments = commentRows.map((data) => {
+          return {
+            id: data.id,
+            article_comment: data.comment,
+            authorId: data.user_id,
+            authorName: data.user_name,
+            createdOn: data.created_on,
+          };
+        });
 
         const data = {
           id: article.id,
