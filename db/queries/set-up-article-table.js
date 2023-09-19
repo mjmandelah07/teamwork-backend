@@ -13,6 +13,8 @@ const createArticles = async () => {
     article TEXT,
     category TEXT,
     user_id INT,
+    flagged BOOLEAN DEFAULT false,
+    flag_reason TEXT,
     created_on TIMESTAMP DEFAULT NOW(),
     updated_on TIMESTAMP
   );

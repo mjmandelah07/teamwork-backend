@@ -9,14 +9,16 @@ const gifCommentTable = async () => {
     id SERIAL PRIMARY KEY,
     user_id INT,
     gif_id INT REFERENCES gifs(id) ON DELETE CASCADE,
-    comment TEXT,
+    gif_comment TEXT,
     user_name TEXT,
+    flagged BOOLEAN DEFAULT false,
+    flag_reason TEXT,
     created_on TIMESTAMP DEFAULT NOW()
   );
 `;
   // Insert dummy data
   const insertDummyData = `
-  INSERT INTO gif_comments (user_id, gif_id, user_name, comment)
+  INSERT INTO gif_comments (user_id, gif_id, user_name, gif_comment)
   VALUES
     ($1, $2, $3, $4); 
 `;

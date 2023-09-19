@@ -47,7 +47,7 @@ const createGifComment = async (req, res) => {
 
     // Insert the comment into the gif_comments table
     const insertCommentQuery = `
-      INSERT INTO gif_comments (user_id, gif_id, user_name, comment)
+      INSERT INTO gif_comments (user_id, gif_id, user_name, gif_comment)
       VALUES ($1, $2, $3, $4)
       RETURNING created_on;
     `;
@@ -208,7 +208,7 @@ const updateGifCommentById = async (req, res) => {
         .json(errorResponse(STATUS.Error, "Gif not found"));
     }
     const commentQuery = `
-      SELECT user_id, comment
+      SELECT user_id, gif_comment
       FROM gif_comments
       WHERE id = $1;
     `;
@@ -235,7 +235,7 @@ const updateGifCommentById = async (req, res) => {
 
     const updateQuery = `
       UPDATE gif_comments
-      SET comment = $1, updated_on = $2
+      SET gif_comment = $1, updated_on = $2
       WHERE id = $3
       RETURNING *;
     `;
@@ -248,7 +248,7 @@ const updateGifCommentById = async (req, res) => {
       message: "Comment successfully updated",
       id: commentId,
       createdOn: updatedValues.created_on,
-      comment: updatedValues.comment,
+      comment: updatedValues.gif_comment,
       updated_on: updatedValues.updated_on,
     };
 

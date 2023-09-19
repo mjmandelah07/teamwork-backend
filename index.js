@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth-routes");
 const articleRoutes = require("./routes/article-routes");
 const gifRoutes = require("./routes/gif-routes.js");
 const feedRoutes = require("./routes/feed-routes");
+const flaggedRoutes = require("./routes/flagged-routes");
 const initializeDatabase = require("./db/queries/initialize-database");
 
 // create a port to listen on
@@ -30,6 +31,7 @@ app.use("/api/v1", authRoutes);
 app.use("/api/v1", articleRoutes);
 app.use("/api/v1", gifRoutes);
 app.use("/api/v1", feedRoutes);
+app.use("/api/v1", flaggedRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
